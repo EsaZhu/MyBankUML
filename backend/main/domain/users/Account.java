@@ -1,6 +1,7 @@
-package bank;
+package main.domain.users;
 
 import lombok.Getter;
+import main.domain.transactions.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;

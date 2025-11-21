@@ -1,4 +1,7 @@
-package bank;
+package main.domain.accounts;
+
+import main.domain.users.Account;
+import main.domain.users.Customer;
 
 public class Saving extends Account {
     public Saving(Customer customer) {

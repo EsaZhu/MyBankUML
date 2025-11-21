@@ -1,4 +1,12 @@
-package bank;
+package test;
+
+import main.domain.users.Customer;
+import main.domain.accounts.Card;
+import main.domain.accounts.Check;
+import main.domain.accounts.Saving;
+import main.domain.transactions.Transaction;
+import main.domain.bank.Bank;
+import main.domain.bank.Branch;
 
 public class Main {
     public static void main(String[] args) {

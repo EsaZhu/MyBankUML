@@ -1,4 +1,4 @@
-package bank;
+package main.domain.transactions;
 
 public class Transaction {
     public void pay() {

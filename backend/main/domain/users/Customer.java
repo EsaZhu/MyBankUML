@@ -1,4 +1,4 @@
-package bank;
+package main.domain.users;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,7 @@
-package bank;
+package main.domain.accounts;
+
+import main.domain.users.Account;
+import main.domain.users.Customer;
 
 public class Check extends Account {
     public Check(Customer customer) {
@@ -18,7 +21,7 @@ public class Check extends Account {
 
     @Override
     public void receipt() {
-        System.out.println("Check receipt for customer: " + customer.getName());    
+        System.out.println("Check receipt for customer: " + customer.getName());
     }
 }
 
