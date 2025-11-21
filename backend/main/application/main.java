@@ -1,9 +1,9 @@
-package test;
+package main.application;
 
 import main.domain.users.Customer;
 import main.domain.accounts.Card;
-import main.domain.accounts.Check;
-import main.domain.accounts.Saving;
+import main.domain.accounts.Checking;
+import main.domain.accounts.Savings;
 import main.domain.transactions.Transaction;
 import main.domain.bank.Bank;
 import main.domain.bank.Branch;
@@ -17,10 +17,10 @@ public class Main {
 
         // Making different accounts
         Card card = new Card(customer);
-        Check check = new Check(customer);
-        Saving saving = new Saving(customer);
+        Checking check = new Checking(customer);
+        Savings saving = new Savings(customer);
 
-        // Transations for each account
+        // Transactions for each account
         Transaction t1 = new Transaction();
         Transaction t2 = new Transaction();
         Transaction t3 = new Transaction();
