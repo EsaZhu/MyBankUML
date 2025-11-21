@@ -1,12 +1,10 @@
 package main.domain.users;
 
-import lombok.Getter;
 import main.domain.transactions.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
 public abstract class Account {
     protected Customer customer;
     protected List<Transaction> transactions;
@@ -18,6 +16,10 @@ public abstract class Account {
 
     public void addTransaction(Transaction transaction) {
         transactions.add(transaction);
+    }
+
+    public List<Transaction> getTransactions() {
+        return transactions;
     }
 
     public abstract void pay();

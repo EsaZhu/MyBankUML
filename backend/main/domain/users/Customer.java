@@ -1,23 +1,17 @@
 package main.domain.users;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Setter
-@Getter
 public class Customer {
+    private final String name;
 
-    private String name;
-
-    // Constructor
     public Customer(String name) {
         this.name = name;
     }
 
-    // Display customers info
+    public String getName() {
+        return name;
+    }
+
     public void printCustomerInfo() {
-        System.out.println("Customer's info: " );
-        System.out.println("name: "+ name);
+        System.out.println("Customer name: " + name);
     }
 }
-

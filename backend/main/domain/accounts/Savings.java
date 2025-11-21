@@ -3,17 +3,13 @@ package main.domain.accounts;
 import main.domain.users.Account;
 import main.domain.users.Customer;
 
-public class Saving extends Account {
-    public Saving(Customer customer) {
+public class Savings extends Account {
+    public Savings(Customer customer) {
         super(customer);
     }
-    public void title(){
-        System.out.println("**Payments**");
-    };
 
     @Override
     public void pay() {
-        title();
         System.out.println("Payment From saving account For: " + customer.getName());
     }
 

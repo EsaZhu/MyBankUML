@@ -85,3 +85,11 @@ git add .
 git commit -m "Implement <module> based on UML"
 git push origin feature/<module-name>
 # open a Merge Request into develop
+```
+## hwo to run main in backend/ main/application/Main.java
+- Make the script executable: 
+- Run it from project root 
+```bash
+chmod +x scripts/run-main.sh
+scripts/run-main.sh
+```

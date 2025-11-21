@@ -5,22 +5,16 @@ import main.domain.accounts.Card;
 import main.domain.accounts.Checking;
 import main.domain.accounts.Savings;
 import main.domain.transactions.Transaction;
-import main.domain.bank.Bank;
-import main.domain.bank.Branch;
 
 public class Main {
     public static void main(String[] args) {
-        // New customer
         Customer customer = new Customer("Shayan Aminaei");
         customer.printCustomerInfo();
-        System.out.println();
 
-        // Making different accounts
         Card card = new Card(customer);
         Checking check = new Checking(customer);
         Savings saving = new Savings(customer);
 
-        // Transactions for each account
         Transaction t1 = new Transaction();
         Transaction t2 = new Transaction();
         Transaction t3 = new Transaction();
@@ -29,28 +23,6 @@ public class Main {
         check.addTransaction(t2);
         saving.addTransaction(t3);
 
-        // Transactions
-        card.pay();
-        card.receipt();
-        System.out.println();
-
-        check.pay();
-        check.receipt();
-        System.out.println();
-
-        saving.pay();
-        saving.receipt();
-        System.out.println();
-
-        // Bank and branches Test
-        Bank bank = new Bank("National Bank");
-        Branch branch1 = new Branch("Branch no1 ", bank);
-        Branch branch2 = new Branch("Branch no2 ", bank);
-
-        bank.printBankInfo();
-        System.out.println();
-
-        // Transaction's test
         System.out.println("Card   transactions count:   " + card.getTransactions().size());
         System.out.println("Check  transactions count:   " + check.getTransactions().size());
         System.out.println("Saving transactions count:   " + saving.getTransactions().size());

@@ -3,19 +3,13 @@ package main.domain.accounts;
 import main.domain.users.Account;
 import main.domain.users.Customer;
 
-public class Check extends Account {
-    public Check(Customer customer) {
+public class Checking extends Account {
+    public Checking(Customer customer) {
         super(customer);
-
-    }
-    public void title(){
-        System.out.println("**Check Title**");
     }
 
     @Override
     public void pay() {
-        //check title
-        title();
         System.out.println("Check payment for customer: " + customer.getName());
     }
 
