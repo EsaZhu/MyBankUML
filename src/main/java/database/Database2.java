@@ -1,4 +1,4 @@
-package main.domain.database;
+package database;
 import static com.mongodb.client.model.Filters.eq;
 
 import org.bson.Document;
@@ -8,11 +8,11 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
-public class Database {
+public class Database2 {
     public static void main( String[] args ) {
 
         // Replace the placeholder with your MongoDB deployment's connection string
-        String uri = "<connection string uri>";
+        String uri = "mongodb+srv://AdminUser:Test1234@ac-gdpuhog.leyizej.mongodb.net/?retryWrites=true&w=majority";
 
         try (MongoClient mongoClient = MongoClients.create(uri)) {
             MongoDatabase database = mongoClient.getDatabase("sample_mflix");

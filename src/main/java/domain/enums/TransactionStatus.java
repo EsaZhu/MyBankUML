@@ -1,4 +1,4 @@
-package main.domain.enums;
+package domain.enums;
 public enum TransactionStatus {
     PENDING,
     COMPLETED,

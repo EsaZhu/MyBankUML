@@ -1,6 +1,6 @@
-package main.domain.users;
+package domain.users;
 
-import main.domain.transactions.Transaction;
+import domain.transactions.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;

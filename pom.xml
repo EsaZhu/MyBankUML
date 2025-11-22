@@ -11,18 +11,22 @@
     <version>1.0</version>
     
     <dependencies>
-      <dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <version>1.18.24</version>
-    <scope>provided</scope>
+    <!-- Lombok -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.24</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- MongoDB Sync Driver -->
     <dependency>
         <groupId>org.mongodb</groupId>
         <artifactId>mongodb-driver-sync</artifactId>
     </dependency>
-</dependency>
-    </dependencies>
-    <dependencyManagement>
+</dependencies>
+
+<dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.mongodb</groupId>
@@ -33,5 +37,6 @@
         </dependency>
     </dependencies>
 </dependencyManagement>
+
     
 </project>
