@@ -2,6 +2,7 @@ package application;
 
 import domain.users.Customer;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.bson.Document;
@@ -33,6 +34,7 @@ public class Main {
         System.out.println("Card   transactions count:   " + card.getTransactions().size());
         System.out.println("Check  transactions count:   " + check.getTransactions().size());
         System.out.println("Saving transactions count:   " + saving.getTransactions().size()); */
+        
         System.out.println("=== Testing MongoDB Connection ===\n");
         
         try {
@@ -42,9 +44,9 @@ public class Main {
             // Test 1: Check connection
             System.out.println("Test 1: Testing connection...");
             if (db.connect()) {
-                System.out.println("✓ Connection successful!\n");
+                System.out.println("- Connection successful! -\n");
             } else {
-                System.out.println("✗ Connection failed!\n");
+                System.out.println("- Connection failed! -\n");
                 return;
             }
             
@@ -53,27 +55,26 @@ public class Main {
             Document branchDoc = new Document()
                 .append("branchID", "BRANCH001")
                 .append("branchName", "Downtown Branch");
-            db.addBranch(branchDoc);
-
             Document testUser = new Document()
                 .append("userID", "TEST001")
                 .append("name", "Test User")
                 .append("passwordHash", "1234")
                 .append("balance", 500.0)
-                .append("branch", "BRANCH001");
+                .append("branch", "B0001")
+                .append("transactionHistory", Arrays.asList("T0001", "T0002"));
             
             db.addAccount(testUser);
-            System.out.println("✓ User account created!\n");
+            System.out.println("- User account created! -\n");
             
             // Test 3: Retrieve the user account
             System.out.println("Test 3: Retrieving user account...");
             Document retrieved = db.retrieveAccount("TEST001");
             if (retrieved != null) {
-                System.out.println("✓ User found!");
+                System.out.println("- User found! -");
                 System.out.println("  Name: " + retrieved.getString("name"));
                 System.out.println("  Balance: $" + retrieved.getDouble("balance") + "\n");
             } else {
-                System.out.println("✗ User not found!\n");
+                System.out.println("- User not found! -\n");
             }
             
             // Test 4: Update user balance
@@ -82,7 +83,7 @@ public class Main {
             db.updateAccount("TEST001", updates);
             
             Document updated = db.retrieveAccount("TEST001");
-            System.out.println("✓ Balance updated!");
+            System.out.println("- Balance updated! -");
             System.out.println("  New Balance: $" + updated.getDouble("balance") + "\n");
             
             // Test 5: Create a transaction
@@ -95,12 +96,12 @@ public class Main {
                 .append("status", "COMPLETED");
             
             db.addTransaction(transaction);
-            System.out.println("✓ Transaction created!\n");
+            System.out.println("- Transaction created! -\n");
             
             // Test 6: Get transaction history
             System.out.println("Test 6: Retrieving transaction history...");
             List<Document> history = db.getTransactionHistory("TEST001");
-            System.out.println("✓ Found " + history.size() + " transaction(s)\n");
+            System.out.println("- Found " + history.size() + " transaction(s) -\n");
             
             for (Document trans : history) {
                 System.out.println("  Transaction ID: " + trans.getString("transactionID"));
@@ -110,10 +111,11 @@ public class Main {
                 System.out.println();
             }
             
-            // Test 7: Clean up - remove test data
+            // Test 7: Clean up - remove test data 
+            // ----CAN REMOVE THIS TO CHECK INSERTION----
             System.out.println("Test 7: Cleaning up test data...");
             db.removeAccount("TEST001");
-            System.out.println("✓ Test data removed!\n");
+            System.out.println("- Test data removed! -\n");
             
             System.out.println("=== All Tests Passed! ===");
             
