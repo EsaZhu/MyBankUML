@@ -1,6 +1,6 @@
-package main.domain.bank;
+package domain.bank;
 
 // removed lombok usage to avoid external dependency
-public class Branch {
+public class Bank {
     // placeholder per UML; kept minimal to compile
 }

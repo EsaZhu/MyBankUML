@@ -1,4 +1,4 @@
-package main.domain.users;
+package domain.users;
 public class DatabaseAdministratorAccount {
     
 }

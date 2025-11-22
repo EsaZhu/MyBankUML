@@ -1,7 +1,7 @@
-package main.domain.accounts;
+package domain.accounts;
 
-import main.domain.users.Account;
-import main.domain.users.Customer;
+import domain.users.Account;
+import domain.users.Customer;
 
 public class Savings extends Account {
     public Savings(Customer customer) {
