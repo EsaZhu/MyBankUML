@@ -20,6 +20,7 @@ public class Database {
     private MongoCollection<Document> adminCollection;
     private MongoCollection<Document> transactionCollection;
     private MongoCollection<Document> branchCollection;
+    private MongoCollection<Document> bankCollection;
     
     private static final String CONNECTION_STRING = "mongodb+srv://AdminUser:Test1234@cluster.leyizej.mongodb.net/?appName=Cluster";
     private static final String DATABASE_NAME = "Bank";
@@ -51,6 +52,7 @@ public class Database {
         adminCollection = mongoDatabase.getCollection("DatabaseAdministratorAccount");
         transactionCollection = mongoDatabase.getCollection("Transaction");
         branchCollection = mongoDatabase.getCollection("Branch");
+        bankCollection = mongoDatabase.getCollection("Bank");
     }
     
     public boolean connect() {
@@ -206,6 +208,25 @@ public class Database {
         branchCollection.find().into(branches);
         return branches;
     }
+
+    // Bank Operations
+     public void addBank(Document bankDoc) {
+        bankCollection.insertOne(bankDoc);
+    }
+    
+    public Document retrieveBank(String bankID) {
+        return bankCollection.find(Filters.eq("bankID", bankID)).first();
+    }
+    
+    public void removeBank(String bankID) {
+        bankCollection.deleteOne(Filters.eq("bankID", bankID));
+    }
+    
+    public List<Document> getAllBanks() {
+        List<Document> banks = new ArrayList<>();
+        bankCollection.find().into(banks);
+        return banks;
+    }
     
     // Search Operations
     public List<Document> searchAccountsByAttribute(String fieldName, Object value) {
@@ -244,6 +265,10 @@ public class Database {
     
     public MongoCollection<Document> getBranchCollection() {
         return branchCollection;
+    }
+
+    public MongoCollection<Document> getBankCollection() {
+        return bankCollection;
     }
 
     // ==================== CONVERSION HELPER METHODS ====================
@@ -293,6 +318,17 @@ public class Database {
                 .append("accounts", getField(branch, "accounts"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Branch to Document", e);
+        }
+    }
+
+    private Document bankToDocument(Object bank) {
+        try {
+            return new Document()
+                .append("name", getField(bank, "name"))
+                .append("bankID", getField(bank, "bankID"))
+                .append("branches", getField(bank, "branches"));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert Bank to Document", e);
         }
     }
     
@@ -416,6 +452,24 @@ public class Database {
             }
             
             return branch;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert Document to Branch", e);
+        }
+    }
+
+    // Document to Bank
+    public Object documentToBank(Document doc, Class<?> bankClass) {
+        try {
+            Object bank = bankClass.getDeclaredConstructor().newInstance();
+            setField(bank, "name", doc.getString("name"));
+            setField(bank, "bankID", doc.getString("bankID"));
+            
+            List<String> branches = (List<String>) doc.get("branches");
+            if (branches != null) {
+                setField(bank, "branches", branches);
+            }
+            
+            return bank;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to Branch", e);
         }
