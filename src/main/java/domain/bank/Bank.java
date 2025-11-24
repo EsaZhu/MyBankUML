@@ -59,11 +59,6 @@ public class Bank {
         return user;
     }
 
-    public UserAccount searchByUsername(String username) {
-        database.findUserByUsername(username);
-        return null;
-    }
-
     public ArrayList<IUser> searchByAttribute(String key, String value) {
         ArrayList<IUser> users = database.searchAccountsByAttribute(key, value);
         this.resultList = users;
@@ -93,8 +88,4 @@ public class Bank {
             }
         }
     }
-
-    // public ArrayList<IUser> displayResults() {
-    //     return this.resultList;
-    // }
 }

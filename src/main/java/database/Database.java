@@ -263,6 +263,7 @@ public class Database {
         return results;
     }
 
+    // This is for bank tellers since they shouldn't be able to search for admins
     public IUser findUserByID(String id) {
         IUser match = null;
         Document user = accountCollection.find(Filters.eq("userID", id)).first();
@@ -275,13 +276,29 @@ public class Database {
         }
         return match;
     }
-    
-    public Document findUserByUsername(String username) {
-        Document user = accountCollection.find(Filters.eq("name", username)).first();
-        if (user == null) {
-            user = tellerCollection.find(Filters.eq("username", username)).first();
+
+    // Generic function to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
+    public IUser retrieveUser(String id) {
+        // For UserAccount 
+        Document doc = accountCollection.find(Filters.eq("userID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
         }
-        return user;
+    
+        // For BankTellerAccount
+        doc = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
+        }
+        
+        // For DatabaseAdministratorAccount
+        doc = adminCollection.find(Filters.eq("adminID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
+        }
+
+        // User not found
+        return null; 
     }
     
     // Getters for direct collection access if needed
@@ -546,29 +563,5 @@ public class Database {
         } else {
             throw new IllegalArgumentException("Unknown account type in document");
         }
-    }
-
-    // Generic function to get any user that searches all three collections
-    public IUser retrieveUser(String id) {
-        // It's UserAccount 
-        Document doc = accountCollection.find(Filters.eq("userID", id)).first();
-        if (doc != null) {
-            return documentToIUser(doc);
-        }
-    
-        // It's BankTellerAccount
-        doc = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
-        if (doc != null) {
-            return documentToIUser(doc);
-        }
-        
-        // It's DatabaseAdministratorAccount
-        doc = adminCollection.find(Filters.eq("adminID", id)).first();
-        if (doc != null) {
-            return documentToIUser(doc);
-        }
-
-        // User not found
-        return null; 
     }
 }
