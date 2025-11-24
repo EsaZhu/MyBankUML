@@ -20,11 +20,10 @@ public class Bank {
     public ArrayList<IUser> resultList;
     public Database database;
 
-    public Bank(String name, String bankID, ArrayList<Branch> branches, String searchID, ArrayList<IUser> resultList, Database database) {
+    public Bank(String name, String bankID, ArrayList<Branch> branches, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
         this.branches = branches;
-        this.searchID = searchID;
         this.resultList = resultList;
 
         this.database = database;
@@ -72,10 +71,6 @@ public class Bank {
         ArrayList<IUser> users = database.searchAccountsByAttribute(key, value);
         this.resultList = users;
         return users;
-    }
-
-    public ArrayList<UserAccount> filterResults(List<String> filters) {
-        return null;
     }
 
     public void displayResults() {
