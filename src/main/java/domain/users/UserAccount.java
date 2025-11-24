@@ -1,5 +1,5 @@
 package domain.users;
 
-public class UserAccount {
+public class UserAccount implements IUser {
     
 }

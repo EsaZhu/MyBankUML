@@ -4,6 +4,11 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+
+import domain.users.BankTellerAccount;
+import domain.users.IUser;
+import domain.users.UserAccount;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -234,14 +239,24 @@ public class Database {
         accountCollection.find(Filters.eq(fieldName, value)).into(results);
         return results;
     }
+
+    public IUser findUserByID(String id) {
+        IUser match = null;
+        Document user = accountCollection.find(Filters.eq("userID", id)).first();
+        if (user == null) {
+            user = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
+            match = documentToBankTellerAccount(user, BankTellerAccount.class);
+        }
+        else {
+            match = documentToUserAccount(user, UserAccount.class);
+        }
+        return match;
+    }
     
     public Document findUserByUsername(String username) {
-        Document user = accountCollection.find(Filters.eq("username", username)).first();
+        Document user = accountCollection.find(Filters.eq("name", username)).first();
         if (user == null) {
             user = tellerCollection.find(Filters.eq("username", username)).first();
-        }
-        if (user == null) {
-            user = adminCollection.find(Filters.eq("username", username)).first();
         }
         return user;
     }
@@ -273,7 +288,7 @@ public class Database {
 
     // ==================== CONVERSION HELPER METHODS ====================
     
-    private Document userAccountToDocument(Object userAccount) {
+    public Document userAccountToDocument(Object userAccount) {
         try {
             return new Document()
                 .append("userID", getField(userAccount, "userID"))
@@ -287,7 +302,7 @@ public class Database {
         }
     }
     
-    private Document tellerAccountToDocument(Object teller) {
+    public Document tellerAccountToDocument(Object teller) {
         try {
             return new Document()
                 .append("bankTellerID", getField(teller, "bankTellerID"))
@@ -298,7 +313,7 @@ public class Database {
         }
     }
     
-    private Document adminAccountToDocument(Object admin) {
+    public Document adminAccountToDocument(Object admin) {
         try {
             return new Document()
                 .append("adminID", getField(admin, "adminID"))
@@ -309,7 +324,7 @@ public class Database {
         }
     }
     
-    private Document branchToDocument(Object branch) {
+    public Document branchToDocument(Object branch) {
         try {
             return new Document()
                 .append("branchID", getField(branch, "branchID"))
@@ -321,7 +336,7 @@ public class Database {
         }
     }
 
-    private Document bankToDocument(Object bank) {
+    public Document bankToDocument(Object bank) {
         try {
             return new Document()
                 .append("name", getField(bank, "name"))
@@ -332,7 +347,7 @@ public class Database {
         }
     }
     
-    private Document transactionToDocument(Object transaction) {
+    public Document transactionToDocument(Object transaction) {
         try {
             return new Document()
                 .append("transactionID", getField(transaction, "transactionID"))
@@ -391,10 +406,11 @@ public class Database {
         }
     }
 
+    // ----DOCUMENT TO CLASS METHODS----
     // Document to UserAccount
-    public Object documentToUserAccount(Document doc, Class<?> userAccountClass) {
+    public <T> T documentToUserAccount(Document doc, Class<T> userAccountClass) {
         try {
-            Object userAccount = userAccountClass.getDeclaredConstructor().newInstance();
+            T userAccount = userAccountClass.getDeclaredConstructor().newInstance();
             setField(userAccount, "userID", doc.getString("userID"));
             setField(userAccount, "name", doc.getString("name"));
             setField(userAccount, "passwordHash", doc.getString("passwordHash"));
@@ -411,11 +427,11 @@ public class Database {
             throw new RuntimeException("Failed to convert Document to UserAccount", e);
         }
     }
-    
+
     // Document to BankTellerAccount
-    public Object documentToBankTellerAccount(Document doc, Class<?> tellerClass) {
+    public <T> T documentToBankTellerAccount(Document doc, Class<T> tellerClass) {
         try {
-            Object teller = tellerClass.getDeclaredConstructor().newInstance();
+            T teller = tellerClass.getDeclaredConstructor().newInstance();
             setField(teller, "bankTellerID", doc.getString("bankTellerID"));
             setField(teller, "username", doc.getString("username"));
             setField(teller, "passwordHash", doc.getString("passwordHash"));
@@ -424,11 +440,11 @@ public class Database {
             throw new RuntimeException("Failed to convert Document to BankTellerAccount", e);
         }
     }
-    
+
     // Document to DatabaseAdministratorAccount
-    public Object documentToAdminAccount(Document doc, Class<?> adminClass) {
+    public <T> T documentToAdminAccount(Document doc, Class<T> adminClass) {
         try {
-            Object admin = adminClass.getDeclaredConstructor().newInstance();
+            T admin = adminClass.getDeclaredConstructor().newInstance();
             setField(admin, "adminID", doc.getString("adminID"));
             setField(admin, "username", doc.getString("username"));
             setField(admin, "passwordHash", doc.getString("passwordHash"));
@@ -437,11 +453,11 @@ public class Database {
             throw new RuntimeException("Failed to convert Document to DatabaseAdministratorAccount", e);
         }
     }
-    
+
     // Document to Branch
-    public Object documentToBranch(Document doc, Class<?> branchClass) {
+    public <T> T documentToBranch(Document doc, Class<T> branchClass) {
         try {
-            Object branch = branchClass.getDeclaredConstructor().newInstance();
+            T branch = branchClass.getDeclaredConstructor().newInstance();
             setField(branch, "branchID", doc.getString("branchID"));
             setField(branch, "branchName", doc.getString("branchName"));
             setField(branch, "address", doc.getString("address"));
@@ -458,9 +474,9 @@ public class Database {
     }
 
     // Document to Bank
-    public Object documentToBank(Document doc, Class<?> bankClass) {
+    public <T> T documentToBank(Document doc, Class<T> bankClass) {
         try {
-            Object bank = bankClass.getDeclaredConstructor().newInstance();
+            T bank = bankClass.getDeclaredConstructor().newInstance();
             setField(bank, "name", doc.getString("name"));
             setField(bank, "bankID", doc.getString("bankID"));
             
@@ -471,14 +487,14 @@ public class Database {
             
             return bank;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to convert Document to Branch", e);
+            throw new RuntimeException("Failed to convert Document to Bank", e);
         }
     }
-    
+
     // Document to Transaction
-    public Object documentToTransaction(Document doc, Class<?> transactionClass) {
+    public <T> T documentToTransaction(Document doc, Class<T> transactionClass) {
         try {
-            Object transaction = transactionClass.getDeclaredConstructor().newInstance();
+            T transaction = transactionClass.getDeclaredConstructor().newInstance();
             setField(transaction, "transactionID", doc.getString("transactionID"));
             setField(transaction, "sourceAccountID", doc.getString("sourceAccountID"));
             setField(transaction, "receiverAccountID", doc.getString("receiverAccountID"));

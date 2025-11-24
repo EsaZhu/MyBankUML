@@ -1,4 +1,4 @@
 package domain.users;
-public class BankTellerAccount {
+public class BankTellerAccount implements IUser {
     
 }
