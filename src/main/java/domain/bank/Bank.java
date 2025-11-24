@@ -53,12 +53,13 @@ public class Bank {
         return null;
     }
 
-    public List<UserAccount> searchByAttribute(String key, String value) {
-        database.searchAccountsByAttribute(key, value);
-        return null;
+    public ArrayList<IUser> searchByAttribute(String key, String value) {
+        ArrayList<IUser> users = database.searchAccountsByAttribute(key, value);
+        this.resultList = users;
+        return users;
     }
 
-    public List<UserAccount> filterResults(List<String> filters) {
+    public ArrayList<UserAccount> filterResults(List<String> filters) {
         return null;
     }
 
