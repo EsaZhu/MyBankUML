@@ -6,12 +6,12 @@ import java.util.List;
 import org.bson.Document;
 
 import database.Database;
+import domain.users.BankTellerAccount;
 import domain.users.IUser;
 import domain.users.UserAccount;
 
 // removed lombok usage to avoid external dependency
 public class Bank {
-    // placeholder per UML; kept minimal to compile
     public String name;
     public String bankID;
     public ArrayList<Branch> branches;
@@ -38,7 +38,23 @@ public class Bank {
     }
 
     public void printBankInfo() {
-
+        System.out.println("BANK INFORMATION");
+        System.out.println("Bank Name: " + name);
+        System.out.println("Bank ID: " + bankID);
+        System.out.println("\n--- BRANCHES ---");
+        
+        if (branches == null || branches.isEmpty()) {
+            System.out.println("No branches available.");
+        } else {
+            for (int i = 0; i < branches.size(); i++) {
+                Branch branch = branches.get(i);
+                System.out.println("\nBranch " + (i + 1) + ":");
+                // -------TO DO: UPDATE THIS AFTER------
+                //System.out.println("  Branch ID: " + branch.getBranchID());
+                //System.out.println("  Branch Name: " + branch.getBranchName());
+                //System.out.println("  Address: " + branch.getAddress());
+            }
+        }
     }
 
     public IUser searchByID(String id) {
@@ -64,6 +80,30 @@ public class Bank {
     }
 
     public void displayResults() {
-
+        System.out.println("Total Results: " + resultList.size());
+        for (int i = 0; i < resultList.size(); i++) {
+            IUser user = resultList.get(i);
+            System.out.println("\nResult " + (i + 1) + ":");
+            
+            if (user instanceof UserAccount) {
+                UserAccount userAccount = (UserAccount) user;
+                System.out.println("  Type: User Account");
+                // -------TO DO: UPDATE THIS AFTER------
+                // System.out.println("  User ID: " + userAccount.getUserID());
+                // System.out.println("  Name: " + userAccount.getName());
+                // System.out.println("  Balance: $" + String.format("%.2f", userAccount.getBalance()));
+                // System.out.println("  Branch: " + userAccount.getBranch());
+            } else if (user instanceof BankTellerAccount) {
+                BankTellerAccount teller = (BankTellerAccount) user;
+                System.out.println("  Type: Bank Teller Account");
+                // -------TO DO: UPDATE THIS AFTER------
+                // System.out.println("  Teller ID: " + teller.getBankTellerID());
+                // System.out.println("  Username: " + teller.getUsername());
+            }
+        }
     }
+
+    // public ArrayList<IUser> displayResults() {
+    //     return this.resultList;
+    // }
 }
