@@ -1,4 +1,4 @@
 package domain.users;
-public class DatabaseAdministratorAccount {
+public class DatabaseAdministratorAccount implements IUser {
     
 }
