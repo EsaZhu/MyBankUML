@@ -6,6 +6,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import domain.users.BankTellerAccount;
+import domain.users.DatabaseAdministratorAccount;
 import domain.users.IUser;
 import domain.users.UserAccount;
 
@@ -528,5 +529,46 @@ public class Database {
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to Transaction", e);
         }
+    }
+
+    // Document to IUser (works for any account type)
+    public IUser documentToIUser(Document doc) {
+        // Check which type of account it is based on the fields in the document
+        if (doc.containsKey("userID")) {
+            // It's UserAccount
+            return documentToUserAccount(doc, UserAccount.class);
+        } else if (doc.containsKey("bankTellerID")) {
+            // It's BankTellerAccount
+            return documentToBankTellerAccount(doc, BankTellerAccount.class);
+        } else if (doc.containsKey("adminID")) {
+            // It's DatabaseAdministratorAccount
+            return documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
+        } else {
+            throw new IllegalArgumentException("Unknown account type in document");
+        }
+    }
+
+    // Generic function to get any user that searches all three collections
+    public IUser retrieveUser(String id) {
+        // It's UserAccount 
+        Document doc = accountCollection.find(Filters.eq("userID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
+        }
+    
+        // It's BankTellerAccount
+        doc = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
+        }
+        
+        // It's DatabaseAdministratorAccount
+        doc = adminCollection.find(Filters.eq("adminID", id)).first();
+        if (doc != null) {
+            return documentToIUser(doc);
+        }
+
+        // User not found
+        return null; 
     }
 }
