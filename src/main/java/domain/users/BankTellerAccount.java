@@ -1,5 +1,6 @@
 package domain.users;
 
+import domain.bank.Branch;
 import domain.enums.UserRole;
 
 public class BankTellerAccount implements IUser {
@@ -7,14 +8,13 @@ public class BankTellerAccount implements IUser {
     private String bankTellerID;
     private String username;
     private String passwordHash;
-    private boolean isActive;
-    // branch?
+    private Branch branch;
 
-    public BankTellerAccount(String bankTellerID, String username, String passwordHash, boolean isActive) {
+    public BankTellerAccount(String bankTellerID, String username, String passwordHash, Branch branch ) {
         this.bankTellerID = bankTellerID;
         this.username = username;
         this.passwordHash = passwordHash;
-        this.isActive = isActive;
+        this.branch = branch;
     }
 
     @Override
