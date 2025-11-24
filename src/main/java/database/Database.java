@@ -234,9 +234,31 @@ public class Database {
     }
     
     // Search Operations
-    public List<Document> searchAccountsByAttribute(String fieldName, Object value) {
+    public ArrayList<IUser> searchAccountsByAttribute(String fieldName, Object value) {
+        ArrayList<IUser> results = new ArrayList<>();
+        
+        // Search in UserAccount collection
+        ArrayList<Document> userDocs = new ArrayList<>();
+        accountCollection.find(Filters.eq(fieldName, value)).into(userDocs);
+        for (Document doc : userDocs) {
+            UserAccount user = documentToUserAccount(doc, UserAccount.class);
+            results.add(user);
+        }
+        
+        // Search in BankTellerAccount collection
+        ArrayList<Document> tellerDocs = new ArrayList<>();
+        tellerCollection.find(Filters.eq(fieldName, value)).into(tellerDocs);
+        for (Document doc : tellerDocs) {
+            BankTellerAccount teller = documentToBankTellerAccount(doc, BankTellerAccount.class);
+            results.add(teller);
+        }
+        return results;
+    }
+
+    public List<Document> searchCustomersByAttribute(String fieldName, Object value) {
         List<Document> results = new ArrayList<>();
         accountCollection.find(Filters.eq(fieldName, value)).into(results);
+        tellerCollection.find(Filters.eq(fieldName, value)).into(results);
         return results;
     }
 
