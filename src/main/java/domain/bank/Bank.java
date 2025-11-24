@@ -20,12 +20,11 @@ public class Bank {
     public ArrayList<IUser> resultList;
     public Database database;
 
-    public Bank(String name, String bankID, ArrayList<Branch> branches, String searchID, ArrayList<String> criteriaList, ArrayList<IUser> resultList, Database database) {
+    public Bank(String name, String bankID, ArrayList<Branch> branches, String searchID, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
         this.branches = branches;
         this.searchID = searchID;
-        this.criteriaList = criteriaList;
         this.resultList = resultList;
 
         this.database = database;
