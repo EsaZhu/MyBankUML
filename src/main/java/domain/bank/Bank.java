@@ -47,10 +47,7 @@ public class Bank {
             for (int i = 0; i < branches.size(); i++) {
                 Branch branch = branches.get(i);
                 System.out.println("\nBranch " + (i + 1) + ":");
-                // -------TO DO: UPDATE THIS AFTER------
-                //System.out.println("  Branch ID: " + branch.getBranchID());
-                //System.out.println("  Branch Name: " + branch.getBranchName());
-                //System.out.println("  Address: " + branch.getAddress());
+                branch.printBranchInfo();
             }
         }
     }
@@ -91,8 +88,8 @@ public class Bank {
                 BankTellerAccount teller = (BankTellerAccount) user;
                 System.out.println("  Type: Bank Teller Account");
                 // -------TO DO: UPDATE THIS AFTER------
-                // System.out.println("  Teller ID: " + teller.getBankTellerID());
-                // System.out.println("  Username: " + teller.getUsername());
+                System.out.println("  Teller Username: " + teller.getUsername());
+                System.out.println("  Role: " + teller.getRole());
             }
         }
     }
