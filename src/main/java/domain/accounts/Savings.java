@@ -1,20 +1,63 @@
 package domain.accounts;
 
-import domain.users.Account;
-import domain.users.Customer;
+import domain.bank.Branch;
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
+import domain.users.UserAccount;
 
-public class Savings extends Account {
-    public Savings(Customer customer) {
-        super(customer);
+public class Savings extends UserAccount {
+
+    private double interestRate;
+    private double minimumBalance;
+
+    public Savings(String userID, String name, String email, String passwordHash, double balance, Branch branch,
+            double interestRate, double minumumBalance) {
+        super(userID, name, email, passwordHash, balance, branch);
+        this.interestRate = interestRate;
+        this.minimumBalance = minumumBalance;
     }
 
+    /**
+     * Overridden withdraw method to enforce minimum balance
+     * @param amount
+     */
     @Override
-    public void pay() {
-        System.out.println("Payment From saving account For: " + customer.getName());
+    public void withdraw(double amount) {
+        if (amount <= 0 || super.getBalance() - amount < this.minimumBalance) {
+            return;
+        }
+        Transaction withdrawTransaction = new Transaction(
+                "TXN_W" + System.currentTimeMillis(),
+                super.userID,
+                null,
+                amount,
+                "WITHDRAW",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        withdrawTransaction.execute();
     }
 
-    @Override
+    /**
+     * Method to calculate and deposit interest
+     * @return
+     */
+    public double calculateInterest() {
+        Transaction interestTransaction = new Transaction(
+                "TXN_I" + System.currentTimeMillis(),
+                super.userID,
+                null,
+                super.getBalance() * interestRate,
+                "DEPOSIT",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        interestTransaction.execute();
+        return super.getBalance() * interestRate;
+    }
+
+    /**
+     * GUI display method to show receipt of interest calculation
+     */
     public void receipt() {
-        System.out.println("Receipt from saving account for: " + customer.getName());
+        // TO BE REPLACED BY GUI
     }
 }

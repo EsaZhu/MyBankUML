@@ -1,6 +1,8 @@
 package domain.accounts;
 
 import domain.bank.Branch;
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
 import domain.users.UserAccount;
 
 public class Card extends UserAccount {
@@ -19,28 +21,37 @@ public class Card extends UserAccount {
 
     /**
      * Overridden deposit method to enforce card limit
+     * 
      * @param amount
      */
     @Override
-    public void deposit(double amount){
+    public void deposit(double amount) {
         // invalid if amount is negative or if deposit exceeds card limit
-        if (amount <= 0 || this.balance + amount > this.cardLimit) {
+        if (amount <= 0 || super.getBalance() + amount > this.cardLimit) {
             return;
         }
-        this.balance += amount;
+        Transaction depositTransaction = new Transaction(
+                "TXN_D" + System.currentTimeMillis(),
+                super.userID,
+                null,
+                amount,
+                "DEPOSIT",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        depositTransaction.execute();
     }
 
     /**
      * Method to apply monthly fee based on interest and minimum payment
      */
     public void applyMonthlyFee() {
-        System.out.println("Applying monthly fee for card account matched with credit interest");
-        this.minimumPayment = (this.cardLimit - this.balance) * interest; // interest on used credit
-        this.withdraw(minimumPayment); // deduct new minimum payment from balance (possible issues with balance being at most the card limit)
+        this.minimumPayment = (this.cardLimit - super.getBalance()) * interest; // interest on used credit
+        this.withdraw(minimumPayment); // deduct new minimum payment from balance
     }
 
     /**
-     * GUI display method to check if the card limit is exceeded and displays available credit
+     * GUI display method to check if the card limit is exceeded and displays
+     * available credit
      */
     public void checkCardLimit() {
         // TO BE REPLACED BY GUI
