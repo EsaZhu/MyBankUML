@@ -15,6 +15,6 @@ public class Savings extends Account {
 
     @Override
     public void receipt() {
-        System.out.println("Payment receipt from saving account for: " + customer.getName());
+        System.out.println("Receipt from saving account for: " + customer.getName());
     }
 }
