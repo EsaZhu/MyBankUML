@@ -32,7 +32,7 @@ public class Card extends UserAccount {
         }
         Transaction depositTransaction = new Transaction(
                 "TXN_D" + System.currentTimeMillis(),
-                super.userID,
+                super.getUserID(),
                 null,
                 amount,
                 "DEPOSIT",

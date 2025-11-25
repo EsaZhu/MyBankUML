@@ -1,6 +1,8 @@
 package domain.accounts;
 
 import domain.bank.Branch;
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
 import domain.users.UserAccount;
 
 public class Checking extends UserAccount {
@@ -31,7 +33,7 @@ public class Checking extends UserAccount {
         }
         Transaction withdrawTransaction = new Transaction(
                 "TXN_W" + System.currentTimeMillis(),
-                super.userID,
+                super.getUserID(),
                 null,
                 amount,
                 "WITHDRAW",

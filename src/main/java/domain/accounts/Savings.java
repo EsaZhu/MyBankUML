@@ -28,7 +28,7 @@ public class Savings extends UserAccount {
         }
         Transaction withdrawTransaction = new Transaction(
                 "TXN_W" + System.currentTimeMillis(),
-                super.userID,
+                super.getUserID(),
                 null,
                 amount,
                 "WITHDRAW",
@@ -44,7 +44,7 @@ public class Savings extends UserAccount {
     public double calculateInterest() {
         Transaction interestTransaction = new Transaction(
                 "TXN_I" + System.currentTimeMillis(),
-                super.userID,
+                super.getUserID(),
                 null,
                 super.getBalance() * interestRate,
                 "DEPOSIT",
