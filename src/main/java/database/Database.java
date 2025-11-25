@@ -5,6 +5,9 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import domain.bank.Bank;
+import domain.bank.Branch;
+import domain.transactions.Transaction;
 import domain.users.BankTellerAccount;
 import domain.users.DatabaseAdministratorAccount;
 import domain.users.IUser;
@@ -78,39 +81,22 @@ public class Database {
         }
     }
     
-    // Generic CRUD operations - work with any collection
-    public void insertDocument(String collectionName, Document document) {
-        mongoDatabase.getCollection(collectionName).insertOne(document);
-    }
-    
-    public Document findDocument(String collectionName, Bson filter) {
-        return mongoDatabase.getCollection(collectionName).find(filter).first();
-    }
-    
-    public List<Document> findDocuments(String collectionName, Bson filter) {
-        List<Document> results = new ArrayList<>();
-        mongoDatabase.getCollection(collectionName).find(filter).into(results);
-        return results;
-    }
-    
-    public void updateDocument(String collectionName, Bson filter, Document updates) {
-        mongoDatabase.getCollection(collectionName).updateOne(filter, new Document("$set", updates));
-    }
-    
-    public void deleteDocument(String collectionName, Bson filter) {
-        mongoDatabase.getCollection(collectionName).deleteOne(filter);
-    }
-    
-    // User Account Operations
-    public void addAccount(Document accountDoc) {
+    // ----User Account Operations----
+    public void addAccount(UserAccount account) {
+        Document accountDoc = userAccountToDocument(account);
         accountCollection.insertOne(accountDoc);
     }
     
-    public Document retrieveAccount(String accountID) {
-        return accountCollection.find(Filters.eq("userID", accountID)).first();
+    public UserAccount retrieveAccount(String accountID) {
+        Document doc = accountCollection.find(Filters.eq("userID", accountID)).first();
+        if (doc != null) {
+            return documentToUserAccount(doc, UserAccount.class);
+        }
+        return null;
     }
     
-    public void updateAccount(String accountID, Document updates) {
+    public void updateAccount(String accountID, UserAccount updatedAccount) {
+        Document updates = userAccountToDocument(updatedAccount);
         accountCollection.updateOne(Filters.eq("userID", accountID), new Document("$set", updates));
     }
     
@@ -118,123 +104,208 @@ public class Database {
         accountCollection.deleteOne(Filters.eq("userID", accountID));
     }
     
-    public List<Document> getAllAccounts() {
-        List<Document> accounts = new ArrayList<>();
-        accountCollection.find().into(accounts);
+    public List<UserAccount> getAllAccounts() {
+        List<UserAccount> accounts = new ArrayList<>();
+        List<Document> accountDocs = new ArrayList<>();
+        accountCollection.find().into(accountDocs);
+        
+        for (Document doc : accountDocs) {
+            UserAccount account = documentToUserAccount(doc, UserAccount.class);
+            accounts.add(account);
+        }
+        
         return accounts;
     }
     
-    // Teller Account Operations
-    public void addTeller(Document tellerDoc) {
+    // ----BankTellerAccount Operations----
+    public void addBankTeller(BankTellerAccount teller) {
+        Document tellerDoc = tellerAccountToDocument(teller);
         tellerCollection.insertOne(tellerDoc);
     }
     
-    public Document retrieveTeller(String tellerID) {
-        return tellerCollection.find(Filters.eq("bankTellerID", tellerID)).first();
+    public BankTellerAccount retrieveBankTeller(String tellerID) {
+        Document doc = tellerCollection.find(Filters.eq("bankTellerID", tellerID)).first();
+        if (doc != null) {
+            return documentToBankTellerAccount(doc, BankTellerAccount.class);
+        }
+        return null;
     }
     
-    public void updateTeller(String tellerID, Document updates) {
+    public void updateBankTeller(String tellerID, BankTellerAccount updatedTeller) {
+        Document updates = tellerAccountToDocument(updatedTeller);
         tellerCollection.updateOne(Filters.eq("bankTellerID", tellerID), new Document("$set", updates));
     }
     
-    public void removeTeller(String tellerID) {
+    public void removeBankTeller(String tellerID) {
         tellerCollection.deleteOne(Filters.eq("bankTellerID", tellerID));
     }
     
-    public List<Document> getAllTellers() {
-        List<Document> tellers = new ArrayList<>();
-        tellerCollection.find().into(tellers);
+    public List<BankTellerAccount> getAllBankTellers() {
+        List<BankTellerAccount> tellers = new ArrayList<>();
+        List<Document> tellerDocs = new ArrayList<>();
+        tellerCollection.find().into(tellerDocs);
+        
+        for (Document doc : tellerDocs) {
+            BankTellerAccount teller = documentToBankTellerAccount(doc, BankTellerAccount.class);
+            tellers.add(teller);
+        }
+        
         return tellers;
     }
     
-    // Admin Account Operations
-    public void addAdmin(Document adminDoc) {
+    // ----DatabaseAdminAccount Operations----
+    public void addAdmin(DatabaseAdministratorAccount admin) {
+        Document adminDoc = adminAccountToDocument(admin);
         adminCollection.insertOne(adminDoc);
     }
     
-    public Document retrieveAdmin(String adminID) {
-        return adminCollection.find(Filters.eq("adminID", adminID)).first();
+    public DatabaseAdministratorAccount retrieveAdmin(String adminID) {
+        Document doc = adminCollection.find(Filters.eq("adminID", adminID)).first();
+        if (doc != null) {
+            return documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
+        }
+        return null;
     }
-    
-    public void updateAdmin(String adminID, Document updates) {
+
+    public void updateAdmin(String adminID, DatabaseAdministratorAccount updatedAdmin) {
+        Document updates = adminAccountToDocument(updatedAdmin);
         adminCollection.updateOne(Filters.eq("adminID", adminID), new Document("$set", updates));
     }
     
-    public List<Document> getAllAdmins() {
-        List<Document> admins = new ArrayList<>();
-        adminCollection.find().into(admins);
+    public List<DatabaseAdministratorAccount> getAllAdmins() {
+        List<DatabaseAdministratorAccount> admins = new ArrayList<>();
+        List<Document> adminDocs = new ArrayList<>();
+        adminCollection.find().into(adminDocs);
+        
+        for (Document doc : adminDocs) {
+            DatabaseAdministratorAccount admin = documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
+            admins.add(admin);
+        }
+        
         return admins;
     }
     
-    // Transaction Operations
-    public void addTransaction(Document transactionDoc) {
+    // ----Transaction Operations----
+    public void addTransaction(Transaction transaction) {
+        Document transactionDoc = transactionToDocument(transaction);
         transactionCollection.insertOne(transactionDoc);
     }
     
-    public Document retrieveTransaction(String transactionID) {
-        return transactionCollection.find(Filters.eq("transactionID", transactionID)).first();
+    public Transaction retrieveTransaction(String transactionID) {
+        Document doc = transactionCollection.find(Filters.eq("transactionID", transactionID)).first();
+        if (doc != null) {
+            return documentToTransaction(doc, Transaction.class);
+        }
+        return null;
     }
     
-    public List<Document> getTransactionHistory(String accountID) {
-        List<Document> transactions = new ArrayList<>();
+    public List<Transaction> getTransactionHistory(String accountID) {
+        List<Transaction> transactions = new ArrayList<>();
+        List<Document> transactionDocs = new ArrayList<>();
         transactionCollection.find(
             Filters.or(
                 Filters.eq("sourceAccountID", accountID),
                 Filters.eq("receiverAccountID", accountID)
             )
-        ).into(transactions);
+        ).into(transactionDocs);
+        
+        for (Document doc : transactionDocs) {
+            Transaction transaction = documentToTransaction(doc, Transaction.class);
+            transactions.add(transaction);
+        }
+        
         return transactions;
     }
     
-    public void updateTransaction(String transactionID, Document updates) {
+    public void updateTransaction(String transactionID, Transaction updatedTransaction) {
+        Document updates = transactionToDocument(updatedTransaction);
         transactionCollection.updateOne(Filters.eq("transactionID", transactionID), new Document("$set", updates));
     }
     
-    public List<Document> getAllTransactions() {
-        List<Document> transactions = new ArrayList<>();
-        transactionCollection.find().into(transactions);
+    public List<Transaction> getAllTransactions() {
+        List<Transaction> transactions = new ArrayList<>();
+        List<Document> transactionDocs = new ArrayList<>();
+        transactionCollection.find().into(transactionDocs);
+        
+        for (Document doc : transactionDocs) {
+            Transaction transaction = documentToTransaction(doc, Transaction.class);
+            transactions.add(transaction);
+        }
+        
         return transactions;
     }
     
-    // Branch Operations
-    public void addBranch(Document branchDoc) {
+    // ----Branch Operations----
+    public void addBranch(Branch branch) {
+        Document branchDoc = branchToDocument(branch);
         branchCollection.insertOne(branchDoc);
     }
-    
-    public Document retrieveBranch(String branchID) {
-        return branchCollection.find(Filters.eq("branchID", branchID)).first();
+
+    public Branch retrieveBranch(String branchID) {
+        Document doc = branchCollection.find(Filters.eq("branchID", branchID)).first();
+        if (doc != null) {
+            return documentToBranch(doc, Branch.class);
+        }
+        // If not found
+        return null;
     }
     
-    public void updateBranch(String branchID, Document updates) {
+    public void updateBranch(String branchID, Branch updatedBranch) {
+        Document updates = branchToDocument(updatedBranch);
         branchCollection.updateOne(Filters.eq("branchID", branchID), new Document("$set", updates));
     }
     
-    public List<Document> getAllBranches() {
-        List<Document> branches = new ArrayList<>();
-        branchCollection.find().into(branches);
+    public List<Branch> getAllBranches() {
+        List<Branch> branches = new ArrayList<>();
+        List<Document> branchDocs = new ArrayList<>();
+        branchCollection.find().into(branchDocs);
+        
+        for (Document doc : branchDocs) {
+            Branch branch = documentToBranch(doc, Branch.class);
+            branches.add(branch);
+        }
+        
         return branches;
     }
 
-    // Bank Operations
-     public void addBank(Document bankDoc) {
+    // ----Bank Operations----
+    public void addBank(Bank bank) {
+        Document bankDoc = bankToDocument(bank);
         bankCollection.insertOne(bankDoc);
     }
     
-    public Document retrieveBank(String bankID) {
-        return bankCollection.find(Filters.eq("bankID", bankID)).first();
+    public Bank retrieveBank(String bankID) {
+        Document doc = bankCollection.find(Filters.eq("bankID", bankID)).first();
+        if (doc != null) {
+            return documentToBank(doc, Bank.class);
+        }
+        return null;
     }
     
     public void removeBank(String bankID) {
         bankCollection.deleteOne(Filters.eq("bankID", bankID));
     }
+
+    public void updateBank(String bankID, Bank updatedBank) {
+        Document updates = bankToDocument(updatedBank);
+        bankCollection.updateOne(Filters.eq("bankID", bankID), new Document("$set", updates));
+    }
     
-    public List<Document> getAllBanks() {
-        List<Document> banks = new ArrayList<>();
-        bankCollection.find().into(banks);
+    public List<Bank> getAllBanks() {
+        List<Bank> banks = new ArrayList<>();
+        List<Document> bankDocs = new ArrayList<>();
+        bankCollection.find().into(bankDocs);
+        
+        for (Document doc : bankDocs) {
+            Bank bank = documentToBank(doc, Bank.class);
+            banks.add(bank);
+        }
+        
         return banks;
     }
     
-    // Search Operations
+    // ----SEARCH METHODS----
+    // This is for database administrators since you can search for banktellers as well
     public ArrayList<IUser> searchAccountsByAttribute(String fieldName, Object value) {
         ArrayList<IUser> results = new ArrayList<>();
         
@@ -256,28 +327,35 @@ public class Database {
         return results;
     }
 
-    public List<Document> searchCustomersByAttribute(String fieldName, Object value) {
-        List<Document> results = new ArrayList<>();
-        accountCollection.find(Filters.eq(fieldName, value)).into(results);
-        tellerCollection.find(Filters.eq(fieldName, value)).into(results);
+    // This is for bank tellers since they shouldn't be able to search for banktellers
+    public ArrayList<IUser> searchCustomersByAttribute(String fieldName, Object value) {
+        ArrayList<IUser> results = new ArrayList<>();
+        // Search in UserAccount collection only (customers)
+        ArrayList<Document> userDocs = new ArrayList<>();
+        accountCollection.find(Filters.eq(fieldName, value)).into(userDocs);
+        for (Document doc : userDocs) {
+            UserAccount user = documentToUserAccount(doc, UserAccount.class);
+            results.add(user);
+        }
         return results;
     }
 
     // This is for bank tellers since they shouldn't be able to search for admins
     public IUser findUserByID(String id) {
-        IUser match = null;
         Document user = accountCollection.find(Filters.eq("userID", id)).first();
-        if (user == null) {
-            user = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
-            match = documentToBankTellerAccount(user, BankTellerAccount.class);
+        if (user != null) {
+            return documentToUserAccount(user, UserAccount.class);
         }
-        else {
-            match = documentToUserAccount(user, UserAccount.class);
+        
+        user = tellerCollection.find(Filters.eq("bankTellerID", id)).first();
+        if (user != null) {
+            return documentToBankTellerAccount(user, BankTellerAccount.class);
         }
-        return match;
+        
+        return null;
     }
 
-    // Generic function to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
+    // For login and database admins to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
     public IUser retrieveUser(String id) {
         // For UserAccount 
         Document doc = accountCollection.find(Filters.eq("userID", id)).first();
@@ -300,34 +378,9 @@ public class Database {
         // User not found
         return null; 
     }
-    
-    // Getters for direct collection access if needed
-    public MongoCollection<Document> getAccountCollection() {
-        return accountCollection;
-    }
-    
-    public MongoCollection<Document> getTellerCollection() {
-        return tellerCollection;
-    }
-    
-    public MongoCollection<Document> getAdminCollection() {
-        return adminCollection;
-    }
-    
-    public MongoCollection<Document> getTransactionCollection() {
-        return transactionCollection;
-    }
-    
-    public MongoCollection<Document> getBranchCollection() {
-        return branchCollection;
-    }
-
-    public MongoCollection<Document> getBankCollection() {
-        return bankCollection;
-    }
 
     // ==================== CONVERSION HELPER METHODS ====================
-    
+    // ----CLASS TO DOCUMENT METHODS----
     public Document userAccountToDocument(Object userAccount) {
         try {
             return new Document()

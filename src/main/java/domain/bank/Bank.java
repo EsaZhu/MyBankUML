@@ -31,8 +31,12 @@ public class Bank {
     }
 
     public void addBranch(Branch branch) {
-        Document branchDoc = database.branchToDocument(branch);
-        database.addBranch(branchDoc);
+        database.addBranch(branch);
+    }
+
+    public List<Branch> getBranches() {
+        List<Branch> branches = database.getAllBranches();
+        return branches;
     }
 
     public void printBankInfo() {
