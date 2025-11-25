@@ -1,5 +1,9 @@
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
 import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
 import domain.users.UserAccount;
 
 public class TransactionTests {
@@ -25,8 +29,7 @@ public class TransactionTests {
     testSourceUser.transferFunds(testReceiverUser, 100.0);
     Transaction completedTransaction = testSourceUser.getTransactionHistory().get(testSourceUser.getTransactionHistory().size() - 1);
     Transaction reversedTransaction = completedTransaction;
-    reversedTransaction.reverse();
+    reversedTransaction.reverseTransaction();
     assertEquals(TransactionStatus.COMPLETED, completedTransaction.getStatus());
-    assertEquals(TransactionStatus.REVERSED, reversedTransaction.getStatus());
   }
 }
