@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import database.Database;
+import domain.enums.TransactionStatus;
 import domain.users.UserAccount;
 
 public class Transaction {
@@ -76,28 +77,36 @@ public class Transaction {
         Document documentSourceAccount = Database.retrieveAccount(this.sourceAccountID);
         UserAccount sourceUser = Database.documentToUserAccount(documentSourceAccount);
         switch (transactionType) {
-            case "WITHDRAW":
-                sourceUser.withdraw(this.amount);
-                this.status = TransactionStatus.COMPLETED;
-                sourceUser.getTransactionHistory().add(this);
-                Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
-                return true;
             case "DEPOSIT":
-                sourceUser.deposit(this.amount); 
+                double newBalance = sourceUser.getBalance() + this.amount;
+                sourceUser.setBalance(newBalance);
                 this.status = TransactionStatus.COMPLETED;
                 sourceUser.getTransactionHistory().add(this);
-                Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
+                Database.updateAccount(this.sourceAccountID,
+                        new Document("transactionHistory", sourceUser.getTransactionHistory()));
+                return true;
+            case "WITHDRAW":
+                double newBalance = sourceUser.getBalance() - this.amount;
+                sourceUser.setBalance(newBalance);
+                this.status = TransactionStatus.COMPLETED;
+                sourceUser.getTransactionHistory().add(this);
+                Database.updateAccount(this.sourceAccountID,
+                        new Document("transactionHistory", sourceUser.getTransactionHistory()));
                 return true;
             case "TRANSFER":
                 Document documentReceiverAccount = Database.retrieveAccount(this.receiverAccountID);
                 UserAccount receiverUser = Database.documentToUserAccount(documentReceiverAccount);
-                sourceUser.withdraw(this.amount);
-                receiverUser.deposit(this.amount);
+                double newSourceBalance = sourceUser.getBalance() - this.amount;
+                sourceUser.setBalance(newSourceBalance);
+                double newReceiverBalance = receiverUser.getBalance() + this.amount;
+                receiverUser.setBalance(newReceiverBalance);
                 this.status = TransactionStatus.COMPLETED;
                 sourceUser.getTransactionHistory().add(this);
                 receiverUser.getTransactionHistory().add(this);
-                Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
-                Database.updateAccount(this.receiverAccountID, new Document("transactionHistory", receiverUser.getTransactionHistory()));
+                Database.updateAccount(this.sourceAccountID,
+                        new Document("transactionHistory", sourceUser.getTransactionHistory()));
+                Database.updateAccount(this.receiverAccountID,
+                        new Document("transactionHistory", receiverUser.getTransactionHistory()));
                 return true;
             default:
                 this.status = TransactionStatus.FAILED;
@@ -112,11 +121,19 @@ public class Transaction {
      */
     public boolean validateTransaction() {
         Document documentSourceAccount = Database.retrieveAccount(this.sourceAccountID);
-        // WITHDRAW/TRANSFER: check if source account has sufficient balance
-        if (documentSourceAccount.getDouble("balance") < this.amount) {
-            return false;
+        UserAccount sourceUser = Database.documentToUserAccount(documentSourceAccount);
+        switch (transactionType) {
+            case "WITHDRAW":
+                return sourceUser.getBalance() >= this.amount;
+            case "TRANSFER":
+                Document documentReceiverAccount = Database.retrieveAccount(this.receiverAccountID);
+                if (documentReceiverAccount == null) {
+                    return false;
+                }
+                return sourceUser.getBalance() >= this.amount;
+            default:
+                return false;
         }
-        return true;
     }
 
     /**
@@ -127,19 +144,20 @@ public class Transaction {
     public void reverseTransaction() {
         if (!this.validateTransaction()) {
             this.status = TransactionStatus.FAILED;
-            return false;
         }
         Document documentSourceAccount = Database.retrieveAccount(this.sourceAccountID);
         UserAccount sourceUser = Database.documentToUserAccount(documentSourceAccount);
         switch (transactionType) {
-            case "WITHDRAW":
-                sourceUser.deposit(this.amount);
+            case "DEPOSIT":
+                double newBalance = sourceUser.getBalance() - this.amount;
+                sourceUser.setBalance(newBalance);
                 this.status = TransactionStatus.REVERSED;
                 sourceUser.getTransactionHistory().add(this);
                 Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
                 return true;
-            case "DEPOSIT":
-                sourceUser.withdraw(this.amount);
+            case "WITHDRAW":
+                double newBalance = sourceUser.getBalance() + this.amount;
+                sourceUser.setBalance(newBalance);
                 this.status = TransactionStatus.REVERSED;
                 sourceUser.getTransactionHistory().add(this);
                 Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
@@ -147,20 +165,21 @@ public class Transaction {
             case "TRANSFER":
                 Document documentReceiverAccount = Database.retrieveAccount(this.receiverAccountID);
                 UserAccount receiverUser = Database.documentToUserAccount(documentReceiverAccount);
-                sourceUser.deposit(this.amount);
-                receiverUser.withdraw(this.amount);
+                double newSourceBalance = sourceUser.getBalance() + this.amount;
+                sourceUser.setBalance(newSourceBalance);
+                double newReceiverBalance = receiverUser.getBalance() - this.amount;
+                receiverUser.setBalance(newReceiverBalance);
                 this.status = TransactionStatus.REVERSED;
                 sourceUser.getTransactionHistory().add(this);
                 receiverUser.getTransactionHistory().add(this);
                 Database.updateAccount(this.sourceAccountID, new Document("transactionHistory", sourceUser.getTransactionHistory()));
-                Database.updateAccount(this.receiverAccountID, new Document("transactionHistory", receiverUserUser.getTransactionHistory()));
+                Database.updateAccount(this.receiverAccountID, new Document("transactionHistory", receiverUser.getTransactionHistory()));
                 return true;
             default:
                 this.status = TransactionStatus.FAILED;
                 return false;
         }
     }
-
 
     /**
      * Calculates and directly modifies new balance for receiver after transaction in the db
