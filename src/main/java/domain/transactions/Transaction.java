@@ -57,7 +57,7 @@ public class Transaction {
      */
     public static List<Transaction> getTransactionHistory(String accountID) {
         Database db = Database.getInstance();
-        UserAccount user = db.retrieveAccount(accountID);
+        UserAccount user = (UserAccount) db.retrieveAccount(accountID);
         return user.getTransactionHistory();
     }
 
@@ -73,7 +73,7 @@ public class Transaction {
             return false;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
         switch (transactionType) {
             case "DEPOSIT":
                 sourceUser.setBalance(sourceUser.getBalance() + this.amount);
@@ -88,7 +88,7 @@ public class Transaction {
                 db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
-                UserAccount receiverUser = db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
                 sourceUser.setBalance(sourceUser.getBalance() - this.amount);
                 receiverUser.setBalance(receiverUser.getBalance() + this.amount);
                 this.status = TransactionStatus.COMPLETED;
@@ -110,12 +110,12 @@ public class Transaction {
      */
     public boolean validateTransaction() {
         Database db = Database.getInstance();
-        UserAccount sourceUser = db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
         switch (transactionType) {
             case "WITHDRAW":
                 return sourceUser.getBalance() >= this.amount;
             case "TRANSFER":
-                UserAccount receiverUser = db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
                 if (receiverUser == null) {
                     return false;
                 }
@@ -135,7 +135,7 @@ public class Transaction {
             this.status = TransactionStatus.FAILED;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
         switch (transactionType) {
             case "DEPOSIT":
                 sourceUser.setBalance(sourceUser.getBalance() - this.amount);
@@ -148,7 +148,7 @@ public class Transaction {
                 sourceUser.getTransactionHistory().add(this);
                 db.updateAccount(this.sourceAccountID, sourceUser);
             case "TRANSFER":
-                UserAccount receiverUser = db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
                 sourceUser.setBalance(sourceUser.getBalance() + this.amount);
                 receiverUser.setBalance(receiverUser.getBalance() - this.amount);
                 this.status = TransactionStatus.REVERSED;
