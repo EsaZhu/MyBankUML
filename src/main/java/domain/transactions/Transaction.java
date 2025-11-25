@@ -174,6 +174,10 @@ public class Transaction {
         this.amount = amount;
     }
 
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
     public void setStatus(TransactionStatus status) {
         this.status = status;
     }
