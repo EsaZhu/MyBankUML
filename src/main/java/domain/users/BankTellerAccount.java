@@ -1,20 +1,22 @@
 package domain.users;
 
+import database.Database;
 import domain.enums.UserRole;
+import domain.users.UserAccount;
+import java.util.List;
 
 public class BankTellerAccount implements IUser {
 
     private String bankTellerID;
     private String username;
     private String passwordHash;
-    private boolean isActive;
-    // branch?
+    private String branchID;
 
-    public BankTellerAccount(String bankTellerID, String username, String passwordHash, boolean isActive) {
+    public BankTellerAccount(String bankTellerID, String username, String passwordHash, String branchID) {
         this.bankTellerID = bankTellerID;
         this.username = username;
         this.passwordHash = passwordHash;
-        this.isActive = isActive;
+        this.branchID = branchID;
     }
 
     @Override
@@ -32,27 +34,66 @@ public class BankTellerAccount implements IUser {
         return UserRole.TELLER;
     }
 
-    // should add getters for other fields
-
-    // ========== Teller-specific methods ==========
-
-    public void manageCustomerAccounts() {
-        // placeholder – interacts with Branch.accounts later
-        System.out.println("Managing customer accounts...");
+    public String getBranchID() {
+        return branchID;
     }
 
-    public void generateReports() {
-        // placeholder – generate account summaries later
-        System.out.println("Generating teller reports...");
+    // ===========================
+    // Teller Operations
+    // ===========================
+
+    // Search only customers in teller’s own branch
+    public List<IUser> searchCustomers(Database db, String key, String value) {
+        List<IUser> all = db.searchCustomersByAttribute(key, value);
+        return all.stream()
+                .filter(u -> u instanceof UserAccount)
+                .filter(u -> ((UserAccount) u).getBranchID().equals(branchID))
+                .toList();
     }
 
-    public void searchAccounts() {
-        // placeholder – search logic added when branch is integrated
-        System.out.println("Searching accounts...");
+    // Search one customer by ID (must match branch)
+    public UserAccount searchCustomerByID(Database db, String id) {
+        IUser result = db.findUserByID(id);
+
+        if (result instanceof UserAccount acc &&
+                acc.getBranchID().equals(branchID)) {
+            return acc;
+        }
+        return null;
     }
 
+    // Simple management placeholder
+    public void manageCustomerAccounts(Database db) {
+        List<IUser> customers = db.searchCustomersByAttribute("branchID", branchID);
+
+        System.out.println("Customers in your branch (" + branchID + "):");
+        for (IUser u : customers) {
+            UserAccount acc = (UserAccount) u;
+            System.out.println("  - " + acc.getUserID() + " | " + acc.getUsername());
+        }
+    }
+
+    // Reports for customers in this branch
+    public void generateReports(Database db) {
+        System.out.println("Generating branch report for " + branchID);
+
+        List<IUser> customers = db.searchCustomersByAttribute("branchID", branchID);
+
+        int count = 0;
+        double totalBalance = 0.0;
+
+        for (IUser u : customers) {
+            UserAccount acc = (UserAccount) u;
+            count++;
+            totalBalance += acc.getBalance();
+        }
+
+        System.out.println("Customers: " + count);
+        System.out.println("Total Balance: " + totalBalance);
+    }
+
+    
     public void processTransactions() {
-        // placeholder – will coordinate with Transaction later
-        System.out.println("Processing transactions...");
+        System.out.println("Processing transactions for branch " + branchID + "...");
     }
 }
