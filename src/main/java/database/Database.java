@@ -104,9 +104,9 @@ public class Database {
         accountCollection.deleteOne(Filters.eq("userID", accountID));
     }
     
-    public List<UserAccount> getAllAccounts() {
-        List<UserAccount> accounts = new ArrayList<>();
-        List<Document> accountDocs = new ArrayList<>();
+    public ArrayList<UserAccount> getAllAccounts() {
+        ArrayList<UserAccount> accounts = new ArrayList<>();
+        ArrayList<Document> accountDocs = new ArrayList<>();
         accountCollection.find().into(accountDocs);
         
         for (Document doc : accountDocs) {
@@ -140,9 +140,9 @@ public class Database {
         tellerCollection.deleteOne(Filters.eq("bankTellerID", tellerID));
     }
     
-    public List<BankTellerAccount> getAllBankTellers() {
-        List<BankTellerAccount> tellers = new ArrayList<>();
-        List<Document> tellerDocs = new ArrayList<>();
+    public ArrayList<BankTellerAccount> getAllBankTellers() {
+        ArrayList<BankTellerAccount> tellers = new ArrayList<>();
+        ArrayList<Document> tellerDocs = new ArrayList<>();
         tellerCollection.find().into(tellerDocs);
         
         for (Document doc : tellerDocs) {
@@ -171,10 +171,14 @@ public class Database {
         Document updates = adminAccountToDocument(updatedAdmin);
         adminCollection.updateOne(Filters.eq("adminID", adminID), new Document("$set", updates));
     }
+
+    public void removeAdmin(String adminID) {
+        adminCollection.deleteOne(Filters.eq("adminID", adminID));
+    }
     
-    public List<DatabaseAdministratorAccount> getAllAdmins() {
-        List<DatabaseAdministratorAccount> admins = new ArrayList<>();
-        List<Document> adminDocs = new ArrayList<>();
+    public ArrayList<DatabaseAdministratorAccount> getAllAdmins() {
+        ArrayList<DatabaseAdministratorAccount> admins = new ArrayList<>();
+        ArrayList<Document> adminDocs = new ArrayList<>();
         adminCollection.find().into(adminDocs);
         
         for (Document doc : adminDocs) {
@@ -199,9 +203,9 @@ public class Database {
         return null;
     }
     
-    public List<Transaction> getTransactionHistory(String accountID) {
-        List<Transaction> transactions = new ArrayList<>();
-        List<Document> transactionDocs = new ArrayList<>();
+    public ArrayList<Transaction> getTransactionHistory(String accountID) {
+        ArrayList<Transaction> transactions = new ArrayList<>();
+        ArrayList<Document> transactionDocs = new ArrayList<>();
         transactionCollection.find(
             Filters.or(
                 Filters.eq("sourceAccountID", accountID),
@@ -222,9 +226,9 @@ public class Database {
         transactionCollection.updateOne(Filters.eq("transactionID", transactionID), new Document("$set", updates));
     }
     
-    public List<Transaction> getAllTransactions() {
-        List<Transaction> transactions = new ArrayList<>();
-        List<Document> transactionDocs = new ArrayList<>();
+    public ArrayList<Transaction> getAllTransactions() {
+        ArrayList<Transaction> transactions = new ArrayList<>();
+        ArrayList<Document> transactionDocs = new ArrayList<>();
         transactionCollection.find().into(transactionDocs);
         
         for (Document doc : transactionDocs) {
@@ -255,9 +259,9 @@ public class Database {
         branchCollection.updateOne(Filters.eq("branchID", branchID), new Document("$set", updates));
     }
     
-    public List<Branch> getAllBranches() {
-        List<Branch> branches = new ArrayList<>();
-        List<Document> branchDocs = new ArrayList<>();
+    public ArrayList<Branch> getAllBranches() {
+        ArrayList<Branch> branches = new ArrayList<>();
+        ArrayList<Document> branchDocs = new ArrayList<>();
         branchCollection.find().into(branchDocs);
         
         for (Document doc : branchDocs) {
@@ -291,9 +295,9 @@ public class Database {
         bankCollection.updateOne(Filters.eq("bankID", bankID), new Document("$set", updates));
     }
     
-    public List<Bank> getAllBanks() {
-        List<Bank> banks = new ArrayList<>();
-        List<Document> bankDocs = new ArrayList<>();
+    public ArrayList<Bank> getAllBanks() {
+        ArrayList<Bank> banks = new ArrayList<>();
+        ArrayList<Document> bankDocs = new ArrayList<>();
         bankCollection.find().into(bankDocs);
         
         for (Document doc : bankDocs) {

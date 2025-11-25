@@ -14,7 +14,6 @@ import domain.users.UserAccount;
 public class Bank {
     public String name;
     public String bankID;
-    public ArrayList<Branch> branches;
     public String searchID;
     public ArrayList<String> criteriaList;
     public ArrayList<IUser> resultList;
@@ -23,7 +22,6 @@ public class Bank {
     public Bank(String name, String bankID, ArrayList<Branch> branches, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
-        this.branches = branches;
         this.resultList = resultList;
 
         this.database = database;
@@ -34,8 +32,8 @@ public class Bank {
         database.addBranch(branch);
     }
 
-    public List<Branch> getBranches() {
-        List<Branch> branches = database.getAllBranches();
+    public ArrayList<Branch> getBranches() {
+        ArrayList<Branch> branches = database.getAllBranches();
         return branches;
     }
 
@@ -45,6 +43,7 @@ public class Bank {
         System.out.println("Bank ID: " + bankID);
         System.out.println("\n--- BRANCHES ---");
         
+        ArrayList<Branch> branches = getBranches();
         if (branches == null || branches.isEmpty()) {
             System.out.println("No branches available.");
         } else {
