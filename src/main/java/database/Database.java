@@ -14,7 +14,6 @@ import domain.users.IUser;
 import domain.users.UserAccount;
 
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;

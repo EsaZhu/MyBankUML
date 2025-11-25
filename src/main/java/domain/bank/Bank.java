@@ -1,9 +1,6 @@
 package domain.bank;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.Document;
 
 import database.Database;
 import domain.users.BankTellerAccount;
