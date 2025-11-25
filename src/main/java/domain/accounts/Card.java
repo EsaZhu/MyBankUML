@@ -5,7 +5,7 @@ import domain.users.UserAccount;
 
 public class Card extends UserAccount {
 
-    private double cardLimit;
+    private double cardLimit; // maximum credit limit
     private double interest;
     private double minimumPayment;
 
@@ -18,25 +18,31 @@ public class Card extends UserAccount {
     }
 
     /**
+     * Overridden deposit method to enforce card limit
+     * @param amount
+     */
+    @Override
+    public void deposit(double amount){
+        // invalid if amount is negative or if deposit exceeds card limit
+        if (amount <= 0 || this.balance + amount > this.cardLimit) {
+            return;
+        }
+        this.balance += amount;
+    }
+
+    /**
      * Method to apply monthly fee based on interest and minimum payment
      */
     public void applyMonthlyFee() {
         System.out.println("Applying monthly fee for card account matched with credit interest");
-        this.minimumPayment = 15.0 + (this.cardLimit - this.balance) * interest; // flat rate + interest on used credit
-        this.withdraw(minimumPayment); // deduct new minimum payment from balance
+        this.minimumPayment = (this.cardLimit - this.balance) * interest; // interest on used credit
+        this.withdraw(minimumPayment); // deduct new minimum payment from balance (possible issues with balance being at most the card limit)
     }
 
     /**
-     * Method to check if the card limit is exceeded and displays available credit
+     * GUI display method to check if the card limit is exceeded and displays available credit
      */
     public void checkCardLimit() {
-        System.out.println("Checking Limit for card account");
-        System.out.println("Current limit: " + this.cardLimit);
-        System.out.println("Available credit: " + (this.cardLimit - this.balance));
-        if (this.cardLimit - this.balance < 0) {
-            System.out.println("Card limit exceeded!");
-        } else {
-            System.out.println("Card limit is within the allowed range.");
-        }
+        // TO BE REPLACED BY GUI
     }
 }
