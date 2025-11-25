@@ -2,12 +2,13 @@ package domain.users;
 
 import domain.bank.Branch;
 import domain.enums.UserRole;
+import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserAccount implements IUser{
+public class UserAccount implements IUser {
     private String userID;
     private String name;
     private String email;
@@ -41,6 +42,7 @@ public class UserAccount implements IUser{
     public UserRole getRole() {
         return UserRole.USER;
     }
+
     public String getUserID() {
         return userID;
     }
@@ -50,9 +52,15 @@ public class UserAccount implements IUser{
             System.out.println("Amount must be positive");
             return;
         }
-        this.balance += amount;
-
-        // TODO:Add transaction object
+        Transaction depositTransaction = new Transaction(
+                "TXN_D" + System.currentTimeMillis(),
+                this.userID,
+                null,
+                amount,
+                "DEPOSIT",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        depositTransaction.execute();
     }
 
     public void withdraw(double amount) {
@@ -65,10 +73,15 @@ public class UserAccount implements IUser{
             System.out.println("Insufficient balance");
             return;
         }
-
-        this.balance -= amount;
-
-        // TODO:Add transaction object
+        Transaction withdrawTransaction = new Transaction(
+                "TXN_W" + System.currentTimeMillis(),
+                this.userID,
+                null,
+                amount,
+                "WITHDRAW",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        withdrawTransaction.execute();
     }
 
     public void transferFunds(UserAccount target, double amount) {
@@ -87,11 +100,34 @@ public class UserAccount implements IUser{
             return;
         }
 
-        this.withdraw(amount);
-
-        target.deposit(amount);
-
-        // TODO:Add transaction object
+        Transaction transferTransaction = new Transaction(
+                "TXN_T" + System.currentTimeMillis(),
+                this.userID,
+                target.getUserID(),
+                amount,
+                "TRANSFER",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        transferTransaction.execute();
     }
 
+    public double getBalance() {
+<<<<<<< HEAD
+        return balance;
+=======
+        return this.balance;
+>>>>>>> a62fc0997baf99c32a32dbfeb5efdf6784a825d8
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
+<<<<<<< HEAD
 }
+=======
+    public List<Transaction> getTransactionHistory() {
+        return this.transactionList;
+    }
+}
+>>>>>>> a62fc0997baf99c32a32dbfeb5efdf6784a825d8
