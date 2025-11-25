@@ -25,8 +25,20 @@
         <artifactId>mongodb-driver-sync</artifactId>
     </dependency>
 </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-<dependencyManagement>
+    <dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.mongodb</groupId>
