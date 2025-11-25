@@ -1,9 +1,6 @@
 package domain.bank;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.Document;
 
 import database.Database;
 import domain.users.BankTellerAccount;
@@ -14,7 +11,6 @@ import domain.users.UserAccount;
 public class Bank {
     public String name;
     public String bankID;
-    public ArrayList<Branch> branches;
     public String searchID;
     public ArrayList<String> criteriaList;
     public ArrayList<IUser> resultList;
@@ -23,7 +19,6 @@ public class Bank {
     public Bank(String name, String bankID, ArrayList<Branch> branches, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
-        this.branches = branches;
         this.resultList = resultList;
 
         this.database = database;
@@ -31,8 +26,12 @@ public class Bank {
     }
 
     public void addBranch(Branch branch) {
-        Document branchDoc = database.branchToDocument(branch);
-        database.addBranch(branchDoc);
+        database.addBranch(branch);
+    }
+
+    public ArrayList<Branch> getBranches() {
+        ArrayList<Branch> branches = database.getAllBranches();
+        return branches;
     }
 
     public void printBankInfo() {
@@ -41,6 +40,7 @@ public class Bank {
         System.out.println("Bank ID: " + bankID);
         System.out.println("\n--- BRANCHES ---");
         
+        ArrayList<Branch> branches = getBranches();
         if (branches == null || branches.isEmpty()) {
             System.out.println("No branches available.");
         } else {
@@ -57,11 +57,6 @@ public class Bank {
         this.resultList = new ArrayList<>();
         this.resultList.add(user);
         return user;
-    }
-
-    public UserAccount searchByUsername(String username) {
-        database.findUserByUsername(username);
-        return null;
     }
 
     public ArrayList<IUser> searchByAttribute(String key, String value) {
@@ -93,8 +88,4 @@ public class Bank {
             }
         }
     }
-
-    // public ArrayList<IUser> displayResults() {
-    //     return this.resultList;
-    // }
 }
