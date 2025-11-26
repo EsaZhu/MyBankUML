@@ -14,8 +14,8 @@ export default function AccountsTable({ accounts }) {
           </tr>
         </thead>
         <tbody>
-          {accounts.map((acc) => (
-            <tr key={acc.id}>
+          {accounts.map((acc, idx) => (
+            <tr key={`${acc.id || acc.customerId}-${acc.type || idx}`}>
               <td>{acc.id}</td>
               <td>{acc.type}</td>
               <td>{acc.currency || "USD"}</td>

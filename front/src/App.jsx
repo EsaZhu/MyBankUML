@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Header from "./components/Header.jsx";
@@ -41,35 +41,32 @@ export default function App() {
     return "/login";
   };
 
-  useEffect(() => {
+  const refreshData = useCallback(async () => {
     if (!user) {
       setAccounts([]);
       setTransactions([]);
       return;
     }
-
-    const loadData = async () => {
-      setLoadingData(true);
-      setDataError("");
-      try {
-        const accountParams =
-          user.role === ROLES.CUSTOMER ? { accountId: user.id } : {};
-
-        const [acctList, txList] = await Promise.all([
-          fetchAccounts(accountParams),
-          fetchTransactions(user.role === ROLES.CUSTOMER ? user.id : undefined),
-        ]);
-        setAccounts(acctList);
-        setTransactions(txList);
-      } catch (err) {
-        setDataError(err.message || "Failed to load data from server");
-      } finally {
-        setLoadingData(false);
-      }
-    };
-
-    loadData();
+    setLoadingData(true);
+    setDataError("");
+    try {
+      const accountParams = user.role === ROLES.CUSTOMER ? { accountId: user.id } : {};
+      const [acctList, txList] = await Promise.all([
+        fetchAccounts(accountParams),
+        fetchTransactions(user.role === ROLES.CUSTOMER ? user.id : undefined),
+      ]);
+      setAccounts(acctList);
+      setTransactions(txList);
+    } catch (err) {
+      setDataError(err.message || "Failed to load data from server");
+    } finally {
+      setLoadingData(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   return (
     <div className="app">
@@ -108,7 +105,12 @@ export default function App() {
             path="/customer"
             element={
               <ProtectedRoute user={user} allowedRoles={[ROLES.CUSTOMER]}>
-                <CustomerDashboard user={user} accounts={accounts} transactions={transactions} />
+                <CustomerDashboard
+                  user={user}
+                  accounts={accounts}
+                  transactions={transactions}
+                  onRefresh={refreshData}
+                />
               </ProtectedRoute>
             }
           />

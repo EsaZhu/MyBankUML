@@ -80,3 +80,53 @@ export async function fetchTransactions(accountId) {
   const data = await handleResponse(res);
   return Array.isArray(data) ? data.map(normalizeTransaction) : [];
 }
+
+export async function createCustomer(payload) {
+  const res = await fetch(`${API_BASE}/customers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteCustomer(userId) {
+  const res = await fetch(`${API_BASE}/customers/${userId}`, {
+    method: "DELETE",
+  });
+  return handleResponse(res);
+}
+
+export async function createTeller(payload) {
+  const res = await fetch(`${API_BASE}/tellers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteTeller(tellerId) {
+  const res = await fetch(`${API_BASE}/tellers/${tellerId}`, {
+    method: "DELETE",
+  });
+  return handleResponse(res);
+}
+
+export async function manageAccount(payload) {
+  const res = await fetch(`${API_BASE}/accounts/manage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function recordTransaction(payload) {
+  const res = await fetch(`${API_BASE}/transactions/transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}

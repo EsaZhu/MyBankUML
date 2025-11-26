@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createTeller, deleteTeller } from "../api";
 import SummaryCards from "../components/SummaryCards.jsx";
 import AccountsTable from "../components/AccountsTable.jsx";
 import TransactionsTable from "../components/TransactionsTable.jsx";
@@ -103,16 +104,34 @@ function TellerManagement() {
     action: "open",
   });
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setMessage(
-      `${form.action === "open" ? "Open" : "Close"} bank teller account request for ${
-        form.tellerId || "(new teller)"
-      } submitted. Hook this to the admin backend.`
-    );
+    setMessage("");
+    setError("");
+    try {
+      setLoading(true);
+      if (form.action === "open") {
+        await createTeller({
+          bankTellerID: form.tellerId,
+          username: form.username,
+          password: form.password,
+          branchID: form.branch,
+        });
+        setMessage("Teller account created.");
+      } else {
+        await deleteTeller(form.tellerId);
+        setMessage("Teller account closed.");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to process teller request");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -158,8 +177,13 @@ function TellerManagement() {
           placeholder="e.g. Downtown"
         />
       </div>
-      <button type="submit">{form.action === "open" ? "Open teller account" : "Close teller account"}</button>
+      <button type="submit" disabled={loading}>
+        {form.action === "open"
+          ? loading ? "Opening..." : "Open teller account"
+          : loading ? "Closing..." : "Close teller account"}
+      </button>
       {message ? <p className="muted" style={{ marginTop: "8px" }}>{message}</p> : null}
+      {error ? <p className="error-msg" style={{ marginTop: "8px" }}>{error}</p> : null}
     </form>
   );
 }

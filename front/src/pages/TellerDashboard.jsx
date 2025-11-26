@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchAccounts } from "../api";
 import SearchForm from "../components/SearchForm.jsx";
+import { createCustomer, manageAccount } from "../api";
 
 export default function TellerDashboard({ user, accounts, transactions }) {
   const navigate = useNavigate();
@@ -64,8 +65,8 @@ export default function TellerDashboard({ user, accounts, transactions }) {
         <div className="card form-card">
           <h3>Create a Customer</h3>
           <p className="muted">
-            Capture customer details and open their primary account. Hook this up to the
-            backend customer/account creation endpoint.
+            Capture customer details and open their primary account. This will create a user in
+            Mongo (UserAccount).
           </p>
           <CreateCustomerForm />
 
@@ -158,16 +159,48 @@ function CreateCustomerForm() {
     initialDeposit: "",
   });
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setMessage(
-      "Submitted. Hook this to the backend to create the customer and account in the database."
-    );
+    setMessage("");
+    setError("");
+    setLoading(true);
+    try {
+      await createCustomer({
+        userID: form.username ? form.username.toUpperCase() : undefined,
+        username: form.username,
+        password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        branch: form.branch,
+        accountType: form.accountType,
+        initialDeposit: Number(form.initialDeposit || 0),
+        email: form.email,
+        phone: form.phone,
+      });
+      setMessage("Customer created successfully.");
+      setForm({
+        firstName: "",
+        lastName: "",
+        username: "",
+        password: "",
+        email: "",
+        phone: "",
+        branch: "",
+        accountType: "Checking",
+        initialDeposit: "",
+      });
+    } catch (err) {
+      setError(err.message || "Failed to create customer");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -239,9 +272,12 @@ function CreateCustomerForm() {
         />
       </div>
       <div style={{ display: "flex", alignItems: "flex-end" }}>
-        <button type="submit">Create customer</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Create customer"}
+        </button>
       </div>
       {message ? <p className="muted" style={{ gridColumn: "1 / -1" }}>{message}</p> : null}
+      {error ? <p className="error-msg" style={{ gridColumn: "1 / -1" }}>{error}</p> : null}
     </form>
   );
 }
@@ -251,14 +287,31 @@ function AccountMaintenance() {
   const [userId, setUserId] = useState("");
   const [accountType, setAccountType] = useState("Checking");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setMessage(
-      `${action === "open" ? "Open" : "Close"} account request for client ${
-        userId || "N/A"
-      } (${accountType}) submitted. Hook this to teller backend.`
-    );
+    setMessage("");
+    setError("");
+    try {
+      setLoading(true);
+      await manageAccount({
+        action,
+        userID: userId,
+        accountType,
+      });
+      setMessage(
+        `${action === "open" ? "Open" : "Close"} account request for client ${
+          userId || "N/A"
+        } (${accountType}) submitted.`
+      );
+      setUserId("");
+    } catch (err) {
+      setError(err.message || "Failed to process request");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -288,9 +341,12 @@ function AccountMaintenance() {
         </select>
       </div>
       <div style={{ display: "flex", alignItems: "flex-end" }}>
-        <button type="submit">{action === "open" ? "Open account" : "Close account"}</button>
+        <button type="submit" disabled={loading}>
+          {action === "open" ? (loading ? "Opening..." : "Open account") : loading ? "Closing..." : "Close account"}
+        </button>
       </div>
       {message ? <p className="muted" style={{ gridColumn: "1 / -1" }}>{message}</p> : null}
+      {error ? <p className="error-msg" style={{ gridColumn: "1 / -1" }}>{error}</p> : null}
     </form>
   );
 }

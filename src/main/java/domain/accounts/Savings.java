@@ -1,20 +1,45 @@
 package domain.accounts;
 
-import domain.users.Account;
-import domain.users.Customer;
+import domain.users.UserAccount;
 
-public class Savings extends Account {
-    public Savings(Customer customer) {
-        super(customer);
+public class Savings extends UserAccount {
+
+    private double interestRate;
+    private double minimumBalance;
+
+    public Savings(String userID, String name, String email, String passwordHash, double balance, domain.bank.Branch branch,
+            double interestRate, double minumumBalance) {
+        super(userID, name, email, passwordHash, balance, branch);
+        this.interestRate = interestRate;
+        this.minimumBalance = minumumBalance;
     }
 
+    /**
+     * Overridden withdraw method to enforce minimum balance
+     * @param amount
+     */
     @Override
-    public void pay() {
-        System.out.println("Payment From saving account For: " + customer.getName());
+    public void withdraw(double amount) {
+        if (amount <= 0 || super.getBalance() - amount < this.minimumBalance) {
+            return;
+        }
+        super.withdraw(amount);
     }
 
-    @Override
+    /**
+     * Method to calculate and deposit interest
+     * @return
+     */
+    public double calculateInterest() {
+        double interest = super.getBalance() * interestRate;
+        super.deposit(interest);
+        return interest;
+    }
+
+    /**
+     * GUI display method to show receipt of interest calculation
+     */
     public void receipt() {
-        System.out.println("Payment receipt from saving account for: " + customer.getName());
+        // TO BE REPLACED BY GUI
     }
 }

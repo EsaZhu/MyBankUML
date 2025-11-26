@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
+import { recordTransaction } from "../api";
 import SummaryCards from "../components/SummaryCards.jsx";
 import AccountsTable from "../components/AccountsTable.jsx";
 import TransactionsTable from "../components/TransactionsTable.jsx";
 import TransferForm from "../components/TransferForm.jsx";
 
-export default function CustomerDashboard({ user, accounts, transactions }) {
+export default function CustomerDashboard({ user, accounts, transactions, onRefresh }) {
   const [tab, setTab] = useState("overview"); // overview | accounts | transfer
   const displayName =
     user?.firstName && user?.lastName
@@ -57,11 +58,11 @@ export default function CustomerDashboard({ user, accounts, transactions }) {
       {tab === "transfer" && (
         <>
           <h3>Transfer / Deposit / Withdraw</h3>
-          <TransferForm accounts={accounts} />
+          <TransferForm accounts={accounts} onSuccess={onRefresh} />
 
           <div className="grid-2" style={{ marginTop: "12px" }}>
-            <QuickTransactionForm type="deposit" accounts={accounts} />
-            <QuickTransactionForm type="withdraw" accounts={accounts} />
+            <QuickTransactionForm type="deposit" accounts={accounts} onRefresh={onRefresh} />
+            <QuickTransactionForm type="withdraw" accounts={accounts} onRefresh={onRefresh} />
           </div>
 
           <h3 style={{ marginTop: "16px" }}>Recent Transactions</h3>
@@ -89,19 +90,37 @@ function TabButtons({ tabs, current, onChange }) {
   );
 }
 
-function QuickTransactionForm({ type, accounts }) {
+function QuickTransactionForm({ type, accounts, onRefresh }) {
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isDeposit = type === "deposit";
   const title = isDeposit ? "Deposit" : "Withdraw";
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setMessage(
-      `${title} of $${amount || 0} ${isDeposit ? "to" : "from"} ${accountId} submitted. Hook this to backend.`
-    );
+    setError("");
+    setMessage("");
+    try {
+      setLoading(true);
+      await recordTransaction({
+        fromAccount: isDeposit ? undefined : accountId,
+        toAccount: isDeposit ? accountId : undefined,
+        amount: Number(amount),
+        type,
+      });
+      setMessage(`${title} of $${amount || 0} ${isDeposit ? "to" : "from"} ${accountId} submitted.`);
+      setAmount("");
+      setAccountId("");
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      setError(err.message || `${title} failed`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,8 +149,11 @@ function QuickTransactionForm({ type, accounts }) {
           required
         />
       </div>
-      <button type="submit">{title}</button>
+      <button type="submit" disabled={loading}>
+        {loading ? "Submitting..." : title}
+      </button>
       {message ? <p className="muted">{message}</p> : null}
+      {error ? <p className="error-msg">{error}</p> : null}
     </form>
   );
 }
