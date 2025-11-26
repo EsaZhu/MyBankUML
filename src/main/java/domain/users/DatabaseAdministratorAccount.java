@@ -11,17 +11,29 @@ public class DatabaseAdministratorAccount implements IUser {
     private String adminID;
     private String username;
     private String passwordHash;
+    private String firstname;
+    private String lastname;
     Database database;
     Scanner scanner = new Scanner(System.in);
 
-    public DatabaseAdministratorAccount(String adminID, String username, String passwordHash) {
+    public DatabaseAdministratorAccount(String adminID, String username, String firstname, String lastname, String passwordHash) {
         this.adminID = adminID;
         this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
         this.passwordHash = passwordHash;
     }
 
     public String getAdminID() {
         return adminID;
+    }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
     }
 
     // Interface getters
