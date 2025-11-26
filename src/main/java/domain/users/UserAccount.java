@@ -136,15 +136,8 @@ public class UserAccount implements IUser {
                 TransactionStatus.PENDING
         );
 
-    public double getBalance() {
-        return this.balance;
+        transferTransaction.execute();
+        transactionList.add(transferTransaction);
     }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
-    public List<Transaction> getTransactionHistory() {
-        return this.transactionList;
-    }
+    
 }
