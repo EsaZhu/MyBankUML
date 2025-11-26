@@ -112,22 +112,14 @@ public class UserAccount implements IUser {
     }
 
     public double getBalance() {
-<<<<<<< HEAD
-        return balance;
-=======
         return this.balance;
->>>>>>> a62fc0997baf99c32a32dbfeb5efdf6784a825d8
     }
 
     public void setBalance(double balance) {
         this.balance = balance;
     }
 
-<<<<<<< HEAD
-}
-=======
     public List<Transaction> getTransactionHistory() {
         return this.transactionList;
     }
 }
->>>>>>> a62fc0997baf99c32a32dbfeb5efdf6784a825d8
