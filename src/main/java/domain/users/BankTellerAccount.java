@@ -13,6 +13,8 @@ public class BankTellerAccount implements IUser {
 
     private String bankTellerID;
     private String username;
+    private String firstname;
+    private String lastname;
     private String passwordHash;
     private String branchID;
 
@@ -21,16 +23,20 @@ public class BankTellerAccount implements IUser {
 
     public BankTellerAccount(String bankTellerID,
             String username,
+            String firstname,
+            String lastname,
             String passwordHash,
             String branchID) {
 
         this.bankTellerID = bankTellerID;
         this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
         this.passwordHash = passwordHash;
         this.branchID = branchID;
     }
 
-    // ========== Interface ==========
+
     @Override
     public String getUsername() {
         return username;
@@ -50,7 +56,14 @@ public class BankTellerAccount implements IUser {
         return branchID;
     }
 
+    public String getFirstName() {
+        return firstname;
+    }
 
+    public String getLastName() {
+        return lastname;
+    }
+  
     public void manageCustomerAccounts() {
 
         System.out.println("\n=== MANAGE CUSTOMER ACCOUNTS ===");
