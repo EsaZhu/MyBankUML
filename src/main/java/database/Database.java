@@ -85,6 +85,11 @@ public class Database {
         Document accountDoc = userAccountToDocument(account);
         accountCollection.insertOne(accountDoc);
     }
+
+    // Overload for direct Document insertion (used by API server)
+    public void addAccount(Document accountDoc) {
+        accountCollection.insertOne(accountDoc);
+    }
     
     public UserAccount retrieveAccount(String accountID) {
         Document doc = accountCollection.find(Filters.eq("userID", accountID)).first();

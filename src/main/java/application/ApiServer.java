@@ -417,7 +417,7 @@ public class ApiServer {
                     return;
                 }
 
-                Document existing = db.retrieveAccount(userId);
+                Document existing = db.getAccountCollection().find(Filters.eq("userID", userId)).first();
                 if (existing != null) {
                     sendJson(exchange, 409, "{\"error\":\"Customer already exists\"}");
                     return;
