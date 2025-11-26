@@ -190,8 +190,23 @@ public class Database {
     
     // ----Transaction Operations----
     public void addTransaction(Transaction transaction) {
+        // Add transaction to database
         Document transactionDoc = transactionToDocument(transaction);
         transactionCollection.insertOne(transactionDoc);
+        
+        // Update user transaction history
+        // Assuming receiver and sender account are the same
+        String userID = transactionDoc.getString("sourceAccountID");
+        updateUserTransactionHistory(userID, transactionDoc.getString("transactionID"));
+    }
+
+    private void updateUserTransactionHistory(String userID, String transactionID) {
+        // Use $addToSet to add transaction ID to the user's transactionHistory array
+        // This prevents duplicates automatically
+        accountCollection.updateOne(
+            Filters.eq("userID", userID),
+            new Document("$addToSet", new Document("transactionHistory", transactionID))
+        );
     }
     
     public Transaction retrieveTransaction(String transactionID) {
@@ -389,7 +404,7 @@ public class Database {
             return new Document()
                 .append("userID", getField(userAccount, "userID"))
                 .append("passwordHash", getField(userAccount, "passwordHash"))
-                .append("branch", getField(userAccount, "branch"))
+                .append("branch", getField(userAccount, "branchId"))
                 .append("transactionHistory", getField(userAccount, "transactionHistory"))
                 .append("first_name", getField(userAccount, "firstName"))
                 .append("last_name", getField(userAccount, "lastName"))
@@ -405,7 +420,10 @@ public class Database {
             return new Document()
                 .append("bankTellerID", getField(teller, "bankTellerID"))
                 .append("username", getField(teller, "username"))
-                .append("passwordHash", getField(teller, "passwordHash"));
+                .append("passwordHash", getField(teller, "passwordHash"))
+                .append("firstname", getField(teller, "firstname"))  // lowercase to match field
+                .append("lastname", getField(teller, "lastname"))    // lowercase to match field
+                .append("branchID", getField(teller, "branchID"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert BankTellerAccount to Document", e);
         }
@@ -416,7 +434,9 @@ public class Database {
             return new Document()
                 .append("adminID", getField(admin, "adminID"))
                 .append("username", getField(admin, "username"))
-                .append("passwordHash", getField(admin, "passwordHash"));
+                .append("passwordHash", getField(admin, "passwordHash"))
+                .append("firstname", getField(admin, "firstname"))  // lowercase to match field
+                .append("lastname", getField(admin, "lastname"));    // lowercase to match field
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert DatabaseAdministratorAccount to Document", e);
         }
@@ -511,7 +531,7 @@ public class Database {
             T userAccount = userAccountClass.getDeclaredConstructor().newInstance();
             setField(userAccount, "userID", doc.getString("userID"));
             setField(userAccount, "passwordHash", doc.getString("passwordHash"));
-            setField(userAccount, "branch", doc.getString("branch"));
+            setField(userAccount, "branchId", doc.getString("branch"));
             setField(userAccount, "firstName", doc.getString("first_name"));
             setField(userAccount, "lastName", doc.getString("last_name"));
             setField(userAccount, "username", doc.getString("username"));
@@ -539,6 +559,9 @@ public class Database {
             setField(teller, "bankTellerID", doc.getString("bankTellerID"));
             setField(teller, "username", doc.getString("username"));
             setField(teller, "passwordHash", doc.getString("passwordHash"));
+            setField(teller, "firstname", doc.getString("firstname"));  // lowercase to match field
+            setField(teller, "lastname", doc.getString("lastname"));    // lowercase to match field
+            setField(teller, "branchID", doc.getString("branchID"));
             return teller;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to BankTellerAccount", e);
@@ -552,6 +575,8 @@ public class Database {
             setField(admin, "adminID", doc.getString("adminID"));
             setField(admin, "username", doc.getString("username"));
             setField(admin, "passwordHash", doc.getString("passwordHash"));
+            setField(admin, "firstname", doc.getString("firstname"));  // lowercase to match field
+            setField(admin, "lastname", doc.getString("lastname"));    // lowercase to match field
             return admin;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to DatabaseAdministratorAccount", e);
