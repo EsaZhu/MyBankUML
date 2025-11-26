@@ -5,9 +5,13 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import domain.accounts.Card;
+import domain.accounts.Checking;
+import domain.accounts.Savings;
 import domain.bank.Bank;
 import domain.bank.Branch;
 import domain.transactions.Transaction;
+import domain.users.Account;
 import domain.users.BankTellerAccount;
 import domain.users.DatabaseAdministratorAccount;
 import domain.users.IUser;
@@ -409,10 +413,33 @@ public class Database {
                 .append("first_name", getField(userAccount, "firstName"))
                 .append("last_name", getField(userAccount, "lastName"))
                 .append("username", getField(userAccount, "username"))
-                .append("accounts", getField(userAccount, "accounts"));
+                .append("accounts", accountsToDocumentList((Account[]) getField(userAccount, "accounts")));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert UserAccount to Document", e);
         }
+    }
+
+    // Helper method to convert Account[] to List<Document>
+    private List<Document> accountsToDocumentList(Account[] accounts) {
+        List<Document> accountDocs = new ArrayList<>();
+        if (accounts != null) {
+            for (Account account : accounts) {
+                Document accountDoc = new Document();
+                
+                // !!!!!TO DO: come back to this later!!!!!
+                // Check which type of Account instance it is
+                if (account instanceof Savings) {
+                    //accountDoc.append("Savings", account.getBalance());
+                } else if (account instanceof Checking) {
+                    //accountDoc.append("Checking", account.getBalance());
+                } else if (account instanceof Card) {
+                    //accountDoc.append("Card", account.getBalance());
+                }
+                
+                accountDocs.add(accountDoc);
+            }
+        }
+        return accountDocs;
     }
     
     public Document tellerAccountToDocument(Object teller) {
@@ -541,15 +568,36 @@ public class Database {
                 setField(userAccount, "transactionHistory", transactionHistory);
             }
             
-            List<Document> accounts = (List<Document>) doc.get("accounts");
-            if (accounts != null) {
-                setField(userAccount, "accounts", accounts);
+            // Convert accounts from List<Document> to Account[]
+            List<Document> accountDocs = (List<Document>) doc.get("accounts");
+            if (accountDocs != null) {
+                Account[] accountArray = new Account[accountDocs.size()];
+                for (int i = 0; i < accountDocs.size(); i++) {
+                    accountArray[i] = documentToAccount(accountDocs.get(i));
+                }
+                setField(userAccount, "accounts", accountArray);
             }
             
             return userAccount;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to UserAccount", e);
         }
+    }
+
+    // Helper method to convert a Document to an Account object
+    private Account documentToAccount(Document doc) {
+        // The document has keys like "Savings", "Checking", "Card"
+        // You need to determine which type and create the appropriate Account subclass
+        //!!!!!TO DO: come back when Savings, Checking and Card classes are fixed!!!!!
+        if (doc.containsKey("Savings")) {
+            //return new Savings(doc.getDouble("Savings"));
+        } else if (doc.containsKey("Checking")) {
+            //return new Checking(doc.getDouble("Checking"));
+        } else if (doc.containsKey("Card")) {
+            //return new Card(doc.getDouble("Card"));
+        }
+        
+        throw new IllegalArgumentException("Unknown account type in document");
     }
 
     // Document to BankTellerAccount
