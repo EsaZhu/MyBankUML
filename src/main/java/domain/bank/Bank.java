@@ -16,14 +16,13 @@ public class Bank {
     public ArrayList<IUser> resultList;
     public Database database;
 
-    public Bank(String name, String bankID, ArrayList<Branch> branches, ArrayList<IUser> resultList, Database database) {
+    public Bank(String name, String bankID, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
         this.branches = new ArrayList<>();
         this.resultList = resultList;
-
+        // Database is connected to in main
         this.database = database;
-        database.connect();
     }
 
     public void addBranch(Branch branch) {
@@ -35,7 +34,6 @@ public class Bank {
         }
     }
 
-    // Update getBranches:
     public ArrayList<Branch> getBranches() {
         ArrayList<Branch> branchObjects = new ArrayList<>();
         
@@ -45,7 +43,6 @@ public class Bank {
                 branchObjects.add(branch);
             }
         }
-        
         return branchObjects;
     }
 

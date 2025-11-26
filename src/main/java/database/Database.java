@@ -388,11 +388,13 @@ public class Database {
         try {
             return new Document()
                 .append("userID", getField(userAccount, "userID"))
-                .append("name", getField(userAccount, "name"))
                 .append("passwordHash", getField(userAccount, "passwordHash"))
-                .append("balance", getField(userAccount, "balance"))
                 .append("branch", getField(userAccount, "branch"))
-                .append("transactionHistory", getField(userAccount, "transactionHistory"));
+                .append("transactionHistory", getField(userAccount, "transactionHistory"))
+                .append("first_name", getField(userAccount, "firstName"))
+                .append("last_name", getField(userAccount, "lastName"))
+                .append("username", getField(userAccount, "username"))
+                .append("accounts", getField(userAccount, "accounts"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert UserAccount to Document", e);
         }
@@ -508,14 +510,20 @@ public class Database {
         try {
             T userAccount = userAccountClass.getDeclaredConstructor().newInstance();
             setField(userAccount, "userID", doc.getString("userID"));
-            setField(userAccount, "name", doc.getString("name"));
             setField(userAccount, "passwordHash", doc.getString("passwordHash"));
-            setField(userAccount, "balance", doc.getDouble("balance"));
             setField(userAccount, "branch", doc.getString("branch"));
+            setField(userAccount, "firstName", doc.getString("first_name"));
+            setField(userAccount, "lastName", doc.getString("last_name"));
+            setField(userAccount, "username", doc.getString("username"));
             
             List<String> transactionHistory = (List<String>) doc.get("transactionHistory");
             if (transactionHistory != null) {
                 setField(userAccount, "transactionHistory", transactionHistory);
+            }
+            
+            List<Document> accounts = (List<Document>) doc.get("accounts");
+            if (accounts != null) {
+                setField(userAccount, "accounts", accounts);
             }
             
             return userAccount;
