@@ -1,8 +1,9 @@
+package unit_tests;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import domain.accounts.Checking;
@@ -15,10 +16,10 @@ import domain.users.UserAccount;
 public class TransactionTests {
 
   @Test
-  public void testTransactionWithInsufficientFunds() {
+  static void testTransactionWithInsufficientFunds() {
     // Arrange
     List<Account> accounts = new ArrayList<>();
-    Account newAccount = new Savings("UT01", "A001", "SAV", 250.0, 0.03, 100.0);
+    Account newAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
     accounts.add(newAccount);
     UserAccount testUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01", accounts);
 
@@ -31,10 +32,10 @@ public class TransactionTests {
   }
 
   @Test
-  public void testTransactionHistoryForAccountWithNoTransactions() {
+  static void testTransactionHistoryForAccountWithNoTransactions() {
     // Arrange
     List<Account> accounts = new ArrayList<>();
-    Account newAccount = new Savings("UT01", "A001", "SAV", 250.0, 0.03, 100.0);
+    Account newAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
     accounts.add(newAccount);
     UserAccount testUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01", accounts);
 
@@ -43,16 +44,16 @@ public class TransactionTests {
   }
 
   @Test
-  public void testReverseCompletedTransaction() {
+  static void testReverseCompletedTransaction() {
     // Arrange
     List<Account> sourceAccounts = new ArrayList<>();
-    Account newSourceAccount = new Savings("UT01", "A001", "SAV", 250.0, 0.03, 100.0);
+    Account newSourceAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
     sourceAccounts.add(newSourceAccount);
     UserAccount sourceUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01",
         sourceAccounts);
 
     List<Account> receiverAccounts = new ArrayList<>();
-    Account newReceiverAccount = new Checking("UT02", "A002", "CHK", 500.0, 200.0, 50.0, 10.0);
+    Account newReceiverAccount = new Checking("UT02", "A002", 500.0, 200.0, 50.0, 10.0);
     receiverAccounts.add(newReceiverAccount);
     UserAccount receiverUser = new UserAccount("UT02", "UFO_denier", "Jane", "Doe", "hashedpassword", "B02",
         receiverAccounts);

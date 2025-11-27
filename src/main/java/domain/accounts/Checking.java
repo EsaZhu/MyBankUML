@@ -12,7 +12,7 @@ public class Checking extends Account {
     private double minBalance; // enforced minimum balance on the account
     private double monthlyFee; // monthly maintenance fee
 
-    public Checking(String userID, String accountID, String accountStrHeader, double balance, double overdraftLimit,
+    public Checking(String userID, String accountID, double balance, double overdraftLimit,
             double minBalance, double monthlyFee) {
         super(userID, accountID, "CHK", balance);
         this.overdraftLimit = overdraftLimit;

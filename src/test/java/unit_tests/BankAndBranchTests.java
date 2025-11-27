@@ -1,4 +1,4 @@
-package test.untit_tests;
+package unit_tests;
 
 import database.Database;
 import domain.bank.*;
@@ -6,22 +6,13 @@ import domain.users.*;
 import domain.transactions.Transaction;
 import java.util.ArrayList;
 
+import org.junit.jupiter.api.Test;
+
 public class BankAndBranchTests {
-
-    public static void main(String[] args) {
-        System.out.println("===== BANK & BRANCH TESTS =====");
-
-        test_AddBranches();
-        test_SearchByID();
-        test_SearchByAttribute();
-        test_FilterResults();
-
-        test_AddAccountToBranch();
-        test_RemoveAccountFromBranch();
-    }
 
     // ================= BANK TESTS =================
 
+    @Test
     static void test_AddBranches() {
         System.out.println("\n--- Bank.addBranch() ---");
 
@@ -36,6 +27,7 @@ public class BankAndBranchTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_SearchByID() {
         System.out.println("\n--- Bank.searchByID() ---");
 
@@ -54,6 +46,7 @@ public class BankAndBranchTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_SearchByAttribute() {
         System.out.println("\n--- Bank.searchByAttribute() ---");
 
@@ -74,6 +67,7 @@ public class BankAndBranchTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_FilterResults() {
         System.out.println("\n--- Bank.filterResults() ---");
 
@@ -94,6 +88,7 @@ public class BankAndBranchTests {
 
     // ================= BRANCH TESTS =================
 
+    @Test
     static void test_AddAccountToBranch() {
         System.out.println("\n--- Branch.addAccount() ---");
 
@@ -108,6 +103,7 @@ public class BankAndBranchTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_RemoveAccountFromBranch() {
         System.out.println("\n--- Branch.removeAccount() ---");
 
