@@ -5,6 +5,7 @@ import database.Database;
 
 import domain.enums.UserRole;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -110,10 +111,10 @@ public class DatabaseAdministratorAccount implements IUser {
     }
 
     private void createTeller(String bankTellerID, String username, String firstname, String lastname, String passwordHash, String branch) {
-        if (database.retrieveTeller(bankTellerID) == null) {
+        if (database.retrieveTeller(bankTellerID) != null) {
             System.out.println("Bank Teller with this ID already exists");
         } else {
-            BankTellerAccount bankTellerAccount = new BankTellerAccount(bankTellerID, username, firstname, lastname, passwordHash, branch);
+            BankTellerAccount bankTellerAccount = new BankTellerAccount(bankTellerID, username, firstname, lastname, passwordHash, branch, database);
             database.addTeller(bankTellerAccount);
         }
     }
@@ -124,7 +125,7 @@ public class DatabaseAdministratorAccount implements IUser {
         } else {
             BankTellerAccount currentTeller = database.retrieveTeller(currentTellerID);
             BankTellerAccount newTeller = new BankTellerAccount(newTellerID, currentTeller.getUsername(), 
-                    currentTeller.getFirstName(), currentTeller.getLastName(),currentTeller.getPasswordHash(), currentTeller.getBranchID());
+                    currentTeller.getFirstName(), currentTeller.getLastName(),currentTeller.getPasswordHash(), currentTeller.getBranchID(), database);
             database.updateTeller(currentTellerID, newTeller);
         }
 
@@ -159,11 +160,10 @@ public class DatabaseAdministratorAccount implements IUser {
                 String username = scanner.nextLine();
                 System.out.println("Enter password: ");
                 String password = scanner.nextLine();
-                System.out.println("Enter balance");
-                double balance = scanner.nextDouble();
                 System.out.println("Enter branch: ");
                 String branchId = scanner.nextLine();
-                createCustomerAccounts(id, username, password, balance, branchId);
+                List<Account> accounts = new ArrayList<>();
+                createCustomerAccounts(id, username, firstname, lastname, password, branchId, accounts);
                 break;
             case 2:
                 viewCustomerAccounts();
@@ -216,7 +216,7 @@ public class DatabaseAdministratorAccount implements IUser {
             System.out.println("Customer does not exist");
         } else {
             UserAccount currentUser = database.retrieveUserAccount(currentCustomerID);
-            UserAccount newUser = new UserAccount(newCustomerID, currentUser.getUsername(), currentUser.getPasswordHash(), currentUser.getBalance(), currentUser.getBranchID());
+            UserAccount newUser = new UserAccount(newCustomerID, currentUser.getUsername(), currentUser.getFirstName(), currentUser.getLastName(), currentUser.getPasswordHash(), currentUser.getBranchID(), currentUser.getAccounts());
             database.updateUserAccount(currentCustomerID, newUser);
         }
 

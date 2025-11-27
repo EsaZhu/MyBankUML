@@ -50,7 +50,15 @@ public class UserAccount implements IUser {
         return this.userID;
     }
 
-    public String getBranchId() {
+    public String getFirstName() {
+        return this.userID;
+    }
+
+    public String getLastName() {
+        return this.userID;
+    }
+
+    public String getBranchID() {
         return this.branchId;
     }
 
