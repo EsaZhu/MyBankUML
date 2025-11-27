@@ -65,7 +65,7 @@ public class IntegrationTests {
         Database db = Database.getInstance();
 
         // Pre-loaded user (assume DB has this)
-        UserAccount user = db.retrieveAccount("U5001");
+        UserAccount user = db.retrieveUserAccount("U5001");
 
         Savings sav = (Savings) user.getAccounts()[0];
         Checking chk = (Checking) user.getAccounts()[1];
@@ -88,7 +88,7 @@ public class IntegrationTests {
         System.out.println("Transaction count = " + tx.size());
 
         // 5. DB account verification
-        UserAccount checkDB = db.retrieveAccount("U5001");
+        UserAccount checkDB = db.retrieveUserAccount("U5001");
         System.out.println("DB Checking = " + checkDB.getAccounts()[1].getBalance());
         System.out.println("DB Savings  = " + checkDB.getAccounts()[0].getBalance());
 
@@ -211,7 +211,7 @@ public class IntegrationTests {
         System.out.println("Accounts in BR001 = " + br1Accounts.size());
 
         // Remove User001
-        db.removeAccount("User001");
+        db.removeUserAccount("User001");
 
         System.out.println("=== ITC-05 END ===");
     }
