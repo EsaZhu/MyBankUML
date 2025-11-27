@@ -3,9 +3,10 @@ package domain.accounts;
 import domain.bank.Branch;
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
+import domain.users.Account;
 import domain.users.UserAccount;
 
-public class Checking extends UserAccount {
+public class Checking extends Account {
 
     private double overdraftLimit; // maximum allowed negative balance
     private double minBalance; // enforced minimum balance on the account

@@ -12,26 +12,38 @@ public class Bank {
     public String name;
     public String bankID;
     public String searchID;
-    public ArrayList<String> criteriaList;
+    private ArrayList<String> branches;
     public ArrayList<IUser> resultList;
     public Database database;
 
-    public Bank(String name, String bankID, ArrayList<Branch> branches, ArrayList<IUser> resultList, Database database) {
+    public Bank(String name, String bankID, ArrayList<IUser> resultList, Database database) {
         this.name = name;
         this.bankID = bankID;
+        this.branches = new ArrayList<>();
         this.resultList = resultList;
-
+        // Database is connected to in main
         this.database = database;
-        database.connect();
     }
 
     public void addBranch(Branch branch) {
         database.addBranch(branch);
+        // Add branch ID to this bank's list
+        if (!branches.contains(branch.getBranchID())) {
+            branches.add(branch.getBranchID());
+            database.updateBank(this.bankID, this);
+        }
     }
 
     public ArrayList<Branch> getBranches() {
-        ArrayList<Branch> branches = database.getAllBranches();
-        return branches;
+        ArrayList<Branch> branchObjects = new ArrayList<>();
+        
+        for (String branchID : branches) {
+            Branch branch = database.retrieveBranch(branchID);
+            if (branch != null) {
+                branchObjects.add(branch);
+            }
+        }
+        return branchObjects;
     }
 
     public void printBankInfo() {
