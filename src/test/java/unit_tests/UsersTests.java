@@ -1,65 +1,15 @@
-package test.untit_tests;
+package unit_tests;
+
+import org.junit.jupiter.api.Test;
 
 import domain.transactions.Transaction;
 import domain.users.*;
 
 public class UsersTests {
 
-    public static void main(String[] args) {
-        System.out.println("===== USERS + ADMIN TESTS =====");
-
-        // USERACCOUNT basic operations
-        testDeposit();
-        testWithdraw();
-        testTransfer();
-
-        // DATABASE ADMIN tests
-        test_Admin_CreateAccounts();
-        test_Admin_ReverseTransaction();
-        test_Admin_EmptyAuditReport();
-    }
-
-    // ---------------- USERACCOUNT ----------------
-
-    static void testDeposit() {
-        UserAccount u = new UserAccount("U1", "user", "f", "l", "hash", "BR1", new Account[] {});
-        u.setBalance(0);
-        u.deposit(100);
-
-        if (u.getBalance() == 100)
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
-    }
-
-    static void testWithdraw() {
-        UserAccount u = new UserAccount("U2", "user", "f", "l", "hash", "BR1", new Account[] {});
-        u.setBalance(100);
-        u.withdraw(100);
-
-        if (u.getBalance() == 0)
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
-    }
-
-    static void testTransfer() {
-        UserAccount u1 = new UserAccount("A", "u", "f", "l", "p", "BR1", new Account[] {});
-        UserAccount u2 = new UserAccount("B", "u", "f", "l", "p", "BR1", new Account[] {});
-
-        u1.setBalance(100);
-        u2.setBalance(0);
-
-        u1.transferFunds(u2, 100);
-
-        if (u1.getBalance() == 0 && u2.getBalance() == 100)
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
-    }
-
     // ---------------- DATABASE ADMINISTRATOR ----------------
 
+    @Test
     static void test_Admin_CreateAccounts() {
         System.out.println("\n--- Admin.manageTellerAccounts + manageCustomerAccounts ---");
 
@@ -77,6 +27,7 @@ public class UsersTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_Admin_ReverseTransaction() {
         System.out.println("\n--- Admin.reverseTransactions() ---");
 
@@ -95,6 +46,7 @@ public class UsersTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_Admin_EmptyAuditReport() {
         System.out.println("\n--- Admin.generateReports() empty ---");
 
