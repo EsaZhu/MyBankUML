@@ -4,6 +4,8 @@ import database.Database;
 
 
 import domain.enums.UserRole;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class DatabaseAdministratorAccount implements IUser {
@@ -103,36 +105,36 @@ public class DatabaseAdministratorAccount implements IUser {
 
     //manage teller additional private functions (only available within the database admin)
     private void viewTellerList() {
-        System.out.println(database.getAllBankTellers());
+        System.out.println(database.getAllTellers());
 
     }
 
     private void createTeller(String bankTellerID, String username, String firstname, String lastname, String passwordHash, String branch) {
-        if (database.retrieveBankTeller(bankTellerID) == null) {
+        if (database.retrieveTeller(bankTellerID) == null) {
             System.out.println("Bank Teller with this ID already exists");
         } else {
             BankTellerAccount bankTellerAccount = new BankTellerAccount(bankTellerID, username, firstname, lastname, passwordHash, branch);
-            database.addBankTeller(bankTellerAccount);
+            database.addTeller(bankTellerAccount);
         }
     }
 
     private void changeTellerUsername(String currentTellerID, String newTellerID) {
-        if (database.retrieveBankTeller(currentTellerID) == null) {
+        if (database.retrieveTeller(currentTellerID) == null) {
             System.out.println("Teller does not exist");
         } else {
-            BankTellerAccount currentTeller = database.retrieveBankTeller(currentTellerID);
+            BankTellerAccount currentTeller = database.retrieveTeller(currentTellerID);
             BankTellerAccount newTeller = new BankTellerAccount(newTellerID, currentTeller.getUsername(), 
                     currentTeller.getFirstName(), currentTeller.getLastName(),currentTeller.getPasswordHash(), currentTeller.getBranchID());
-            database.updateBankTeller(currentTellerID, newTeller);
+            database.updateTeller(currentTellerID, newTeller);
         }
 
     }
 
     private void removeTellerAccount(String bankTellerID) {
-        if (database.retrieveBankTeller(bankTellerID) == null) {
+        if (database.retrieveTeller(bankTellerID) == null) {
             System.out.println("Teller does not exist");
         } else {
-            database.removeBankTeller(bankTellerID);
+            database.removeTeller(bankTellerID);
         }
 
     }
@@ -194,11 +196,11 @@ public class DatabaseAdministratorAccount implements IUser {
 
     }
 
-    private void createCustomerAccounts(String userID, String name, String passwordHash, double balance, String branch) {
+    private void createCustomerAccounts(String userID, String username, String firstname, String lastname, String passwordHash, String branch, List<Account> accounts) {
         if (database.retrieveUserAccount(userID) != null) {
             System.out.println("Customer already exists");
         } else {
-            UserAccount newUser = new UserAccount(userID, name, passwordHash, balance, branch);
+            UserAccount newUser = new UserAccount(userID, username, firstname, lastname, passwordHash, branch, accounts);
             database.addAccount(newUser);
         }
 
@@ -229,7 +231,7 @@ public class DatabaseAdministratorAccount implements IUser {
     }
 
     public void generateReports() {
-        int totalBankTellers = database.getAllBankTellers().size();
+        int totalBankTellers = database.getAllTellers().size();
         int totalCustomers = database.getAllAccounts().size();
         int totalAdmins = database.getAllAdmins().size();
         int totalBranches = database.getAllBranches().size();
@@ -247,7 +249,7 @@ public class DatabaseAdministratorAccount implements IUser {
 
     //changed this to boolean
     public boolean searchAccounts(String id) {
-        return database.retrieveUserAccount(id) != null && database.retrieveBankTeller(id) != null;
+        return database.retrieveUserAccount(id) != null && database.retrieveTeller(id) != null;
     }
 
 
