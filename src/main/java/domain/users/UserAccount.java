@@ -1,5 +1,6 @@
 package domain.users;
 
+import domain.accounts.Account;
 import domain.enums.UserRole;
 import domain.transactions.Transaction;
 import java.util.ArrayList;

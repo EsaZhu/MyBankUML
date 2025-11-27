@@ -3,7 +3,6 @@ package domain.accounts;
 import domain.bank.Branch;
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
-import domain.users.Account;
 import domain.users.UserAccount;
 
 public class Savings extends Account {

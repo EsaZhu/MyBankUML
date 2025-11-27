@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import domain.accounts.Account;
 import domain.accounts.Checking;
 import domain.accounts.Savings;
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
-import domain.users.Account;
 import domain.users.UserAccount;
 
 public class TransactionTests {

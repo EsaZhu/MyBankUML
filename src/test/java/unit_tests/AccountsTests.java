@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import domain.accounts.Card;
-import domain.accounts.Checking;
-import domain.accounts.Savings;
+import domain.accounts.*;
 
 public class AccountsTests {
 

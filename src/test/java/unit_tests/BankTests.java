@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 import org.junit.jupiter.api.Test;
 
-public class BankAndBranchTests {
+public class BankTests {
 
     // ================= BANK TESTS =================
 
@@ -17,7 +17,7 @@ public class BankAndBranchTests {
     static void test_AddBranches() {
         System.out.println("\n--- Bank.addBranch() ---");
 
-        Bank bank = new Bank("MyBank", "B1");
+        Bank bank = new Bank("MyBank", "B1", null);
 
         bank.addBranch(new Branch("BR1", "North Branch", "123 North St"));
         bank.addBranch(new Branch("BR2", "South Branch", "456 South St"));

@@ -1,6 +1,7 @@
 package unit_tests;
 
 import database.Database;
+import domain.accounts.Account;
 import domain.users.*;
 import java.util.ArrayList;
 

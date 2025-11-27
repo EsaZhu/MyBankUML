@@ -1,9 +1,9 @@
 package domain.users;
 
 import database.Database;
+import domain.accounts.Account;
 import domain.enums.UserRole;
 import domain.transactions.Transaction;
-import domain.users.Account;
 import domain.users.UserAccount;
 
 import java.time.LocalDateTime;

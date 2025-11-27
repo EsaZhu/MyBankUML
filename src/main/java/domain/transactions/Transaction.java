@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import database.Database;
+import domain.accounts.Account;
 import domain.enums.TransactionStatus;
-import domain.users.Account;
 import domain.users.UserAccount;
 
 public class Transaction {

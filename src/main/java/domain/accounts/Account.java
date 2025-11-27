@@ -1,4 +1,4 @@
-package domain.users;
+package domain.accounts;
 
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
@@ -6,6 +6,8 @@ import domain.transactions.Transaction;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import domain.users.UserAccount;
 
 
 public abstract class Account {

@@ -5,13 +5,13 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import domain.accounts.Account;
 import domain.accounts.Card;
 import domain.accounts.Checking;
 import domain.accounts.Savings;
 import domain.bank.Bank;
 import domain.bank.Branch;
 import domain.transactions.Transaction;
-import domain.users.Account;
 import domain.users.BankTellerAccount;
 import domain.users.DatabaseAdministratorAccount;
 import domain.users.IUser;

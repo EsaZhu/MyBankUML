@@ -2,7 +2,6 @@ package domain.accounts;
 
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
-import domain.users.Account;
 
 public class Card extends Account {
 
