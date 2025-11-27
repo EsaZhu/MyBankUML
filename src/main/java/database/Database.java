@@ -397,15 +397,26 @@ public class Database {
         return null;
     }
 
-    public Document findUserByUsername(String username) {
-        Document user = accountCollection.find(Filters.eq("username", username)).first();
-        if (user == null) {
-            user = tellerCollection.find(Filters.eq("username", username)).first();
+    public IUser retrieveUserByUsername(String username) {
+        // Check UserAccount
+        Document doc = accountCollection.find(Filters.eq("username", username)).first();
+        if (doc != null) {
+            return documentToUserAccount(doc, UserAccount.class);
         }
-        if (user == null) {
-            user = adminCollection.find(Filters.eq("username", username)).first();
+        
+        // Check BankTellerAccount
+        doc = tellerCollection.find(Filters.eq("username", username)).first();
+        if (doc != null) {
+            return documentToBankTellerAccount(doc, BankTellerAccount.class);
         }
-        return user;
+        
+        // Check DatabaseAdministratorAccount
+        doc = adminCollection.find(Filters.eq("adminID", username)).first();
+        if (doc != null) {
+            return documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
+        }
+        
+        return null;
     }
 
     // For login and database admins to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
