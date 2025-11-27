@@ -32,7 +32,7 @@ public class DatabaseAndLoginTests {
 
         db.addAccount(u);
 
-        UserAccount retrieved = db.retrieveAccount("1234");
+        UserAccount retrieved = db.retrieveUserAccount("1234");
 
         if (retrieved != null && retrieved.getUserID().equals("1234"))
             System.out.println("PASS");
@@ -48,9 +48,9 @@ public class DatabaseAndLoginTests {
         UserAccount u = new UserAccount("999", "bob", "f", "l", "p", "BR3", new Account[] {});
 
         db.addAccount(u);
-        db.removeAccount("999");
+        db.removeUserAccount("999");
 
-        if (db.retrieveAccount("999") == null)
+        if (db.retrieveUserAccount("999") == null)
             System.out.println("PASS");
         else
             System.out.println("FAIL");
@@ -66,9 +66,9 @@ public class DatabaseAndLoginTests {
         db.addAccount(u);
 
         u.setLastName("UPDATED");
-        db.updateAccount("777", u);
+        db.updateUserAccount("777", u);
 
-        UserAccount updated = db.retrieveAccount("777");
+        UserAccount updated = db.retrieveUserAccount("777");
 
         if (updated != null && updated.getLastName().equals("UPDATED"))
             System.out.println("PASS");

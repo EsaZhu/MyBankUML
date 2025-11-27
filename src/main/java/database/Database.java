@@ -110,7 +110,7 @@ public class Database {
         accountCollection.insertOne(accountDoc);
     }
     
-    public UserAccount retrieveAccount(String accountID) {
+    public UserAccount retrieveUserAccount(String accountID) {
         Document doc = accountCollection.find(Filters.eq("userID", accountID)).first();
         if (doc != null) {
             return documentToUserAccount(doc, UserAccount.class);
@@ -118,12 +118,12 @@ public class Database {
         return null;
     }
     
-    public void updateAccount(String accountID, UserAccount updatedAccount) {
+    public void updateUserAccount(String accountID, UserAccount updatedAccount) {
         Document updates = userAccountToDocument(updatedAccount);
         accountCollection.updateOne(Filters.eq("userID", accountID), new Document("$set", updates));
     }
     
-    public void removeAccount(String accountID) {
+    public void removeUserAccount(String accountID) {
         accountCollection.deleteOne(Filters.eq("userID", accountID));
     }
     
@@ -138,6 +138,17 @@ public class Database {
         }
         
         return accounts;
+    }
+
+    public Account retrieveAccountByAccountID(String accountID) {
+        for (UserAccount user : getAllAccounts()) {
+            for (Account acc : user.getAccounts()) {
+                if (acc.getAccountID().equals(accountID)) {
+                    return acc;
+                }
+            }
+        }
+        return null;
     }
     
     // ----BankTellerAccount Operations----
@@ -220,7 +231,7 @@ public class Database {
         
         // Update user transaction history
         // Assuming receiver and sender account are the same
-        String userID = transactionDoc.getString("sourceAccountID");
+        String userID = transactionDoc.getString("sourceUserID");
         updateUserTransactionHistory(userID, transactionDoc.getString("transactionID"));
     }
 
@@ -466,18 +477,11 @@ public class Database {
         List<Document> accountDocs = new ArrayList<>();
         if (accounts != null) {
             for (Account account : accounts) {
-                Document accountDoc = new Document();
-                
-                // !!!!!TO DO: come back to this later!!!!!
-                // Check which type of Account instance it is
-                if (account instanceof Savings) {
-                    //accountDoc.append("Savings", account.getBalance());
-                } else if (account instanceof Checking) {
-                    //accountDoc.append("Checking", account.getBalance());
-                } else if (account instanceof Card) {
-                    //accountDoc.append("Card", account.getBalance());
-                }
-                
+                Document accountDoc = new Document()
+                        .append("accountID", account.getAccountID())
+                        .append("accountHeader", account.getAccountHeader())
+                        .append("balance", account.getBalance());
+
                 accountDocs.add(accountDoc);
             }
         }
@@ -538,6 +542,7 @@ public class Database {
         try {
             return new Document()
                 .append("transactionID", getField(transaction, "transactionID"))
+                .append("sourceUserID", getField(transaction, "sourceUserID"))
                 .append("sourceAccountID", getField(transaction, "sourceAccountID"))
                 .append("receiverAccountID", getField(transaction, "receiverAccountID"))
                 .append("amount", getField(transaction, "amount"))
@@ -631,15 +636,21 @@ public class Database {
         // The document has keys like "Savings", "Checking", "Card"
         // You need to determine which type and create the appropriate Account subclass
         //!!!!!TO DO: come back when Savings, Checking and Card classes are fixed!!!!!
-        if (doc.containsKey("Savings")) {
-            //return new Savings(doc.getDouble("Savings"));
-        } else if (doc.containsKey("Checking")) {
-            //return new Checking(doc.getDouble("Checking"));
-        } else if (doc.containsKey("Card")) {
-            //return new Card(doc.getDouble("Card"));
+        String header = doc.getString("accountHeader");
+        String id = doc.getString("accountID");
+        double balance = doc.getDouble("balance");
+
+        switch (header) {
+            case "SAV":
+                return new Savings(null, id, balance, 0, 0);
+            case "CHK":
+                return new Checking(null, id, balance, 0, 0, 0);
+            case "CRD":
+                return new Card(null, id, balance, 0, 0, 0);
+            default:
+                throw new IllegalArgumentException("Unknown account type: " + header);
         }
-        
-        throw new IllegalArgumentException("Unknown account type in document");
+
     }
 
     // Document to BankTellerAccount
@@ -716,10 +727,12 @@ public class Database {
             T transaction = transactionClass.getDeclaredConstructor().newInstance();
             setField(transaction, "transactionID", doc.getString("transactionID"));
             setField(transaction, "sourceAccountID", doc.getString("sourceAccountID"));
+            setField(transaction, "sourceUserID", doc.getString("sourceUserID"));
             setField(transaction, "receiverAccountID", doc.getString("receiverAccountID"));
             setField(transaction, "amount", doc.getDouble("amount"));
             setField(transaction, "transactionType", doc.getString("transactionType"));
-            setField(transaction, "transactionDateTime", doc.getString("transactionDateTime"));
+            setField(transaction, "transactionDateTime",
+                    java.time.LocalDateTime.parse(doc.getString("transactionDateTime")));
             setField(transaction, "status", doc.getString("status"));
             return transaction;
         } catch (Exception e) {

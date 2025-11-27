@@ -111,7 +111,7 @@ public class BankAndBranchTests {
         UserAccount acc = new UserAccount("300", "user2", "f", "l", "p", "BR11", new Account[] {});
 
         branch.addAccount(acc);
-        branch.removeAccount("300");
+        branch.removeUserAccount("300");
 
         if (branch.getAccount("300") == null)
             System.out.println("PASS");
