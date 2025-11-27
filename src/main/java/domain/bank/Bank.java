@@ -17,6 +17,14 @@ public class Bank {
         this.database = database;
     }
 
+    public String getBankID() {
+        return this.bankID;
+    }
+
+    public String getBankName() {
+        return this.name;
+    }
+
     public ArrayList<Branch> getBranches() {
         return database.getAllBranches();
     }
