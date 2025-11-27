@@ -20,7 +20,7 @@ public class BankTellerAccount implements IUser {
     private String passwordHash;
     private String branchID;
 
-    private final Database database = Database.getInstance();
+    private Database database;
     private final Scanner scanner = new Scanner(System.in);
 
     public BankTellerAccount(String bankTellerID,
@@ -28,7 +28,7 @@ public class BankTellerAccount implements IUser {
             String firstname,
             String lastname,
             String passwordHash,
-            String branchID) {
+            String branchID, Database database) {
 
         this.bankTellerID = bankTellerID;
         this.username = username;
@@ -36,6 +36,7 @@ public class BankTellerAccount implements IUser {
         this.lastname = lastname;
         this.passwordHash = passwordHash;
         this.branchID = branchID;
+        this.database = database;
     }
 
     @Override
