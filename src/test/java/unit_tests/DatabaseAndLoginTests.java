@@ -1,23 +1,16 @@
-package unittests;
-
+package unit_tests;
 
 import database.Database;
 import domain.users.*;
 import java.util.ArrayList;
 
+import org.junit.jupiter.api.Test;
+
 public class DatabaseAndLoginTests {
-
-    public static void main(String[] args) {
-        System.out.println("===== DATABASE TESTS =====");
-
-        test_DB_Connect();
-        test_DB_AddRetrieve();
-        test_DB_AddRemove();
-        test_DB_AddUpdate();
-    }
 
     // ================= DATABASE TESTS =================
 
+    @Test
     static void test_DB_Connect() {
         System.out.println("\n--- Database.connect() ---");
 
@@ -30,6 +23,7 @@ public class DatabaseAndLoginTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_DB_AddRetrieve() {
         System.out.println("\n--- addAccount + retrieveAccount ---");
 
@@ -46,6 +40,7 @@ public class DatabaseAndLoginTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_DB_AddRemove() {
         System.out.println("\n--- addAccount + removeAccount ---");
 
@@ -61,6 +56,7 @@ public class DatabaseAndLoginTests {
             System.out.println("FAIL");
     }
 
+    @Test
     static void test_DB_AddUpdate() {
         System.out.println("\n--- addAccount + updateAccount ---");
 

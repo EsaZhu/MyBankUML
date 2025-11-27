@@ -1,10 +1,8 @@
 package domain.accounts;
 
-import domain.bank.Branch;
 import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
 import domain.users.Account;
-import domain.users.UserAccount;
 
 public class Card extends Account {
 
@@ -12,9 +10,9 @@ public class Card extends Account {
     private double interest;
     private double minimumPayment;
 
-    public Card(String userID, String name, String email, String passwordHash, double balance, Branch branch,
-            double cardLimit, double interest, double minimumPayment) {
-        super(userID, name, email, passwordHash, balance, branch);
+    public Card(String userID, String accountID, double balance, double cardLimit, double interest,
+            double minimumPayment) {
+        super(userID, accountID, "CRD", balance);
         this.cardLimit = cardLimit;
         this.interest = interest;
         this.minimumPayment = minimumPayment;
@@ -32,8 +30,10 @@ public class Card extends Account {
             return;
         }
         Transaction depositTransaction = new Transaction(
-                "TXN_D" + System.currentTimeMillis(),
+                "TXN_" + super.accountHeader + "_D" + System.currentTimeMillis(),
                 super.getUserID(),
+                super.getAccountID(),
+                null,
                 null,
                 amount,
                 "DEPOSIT",

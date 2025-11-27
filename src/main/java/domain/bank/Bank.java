@@ -24,6 +24,10 @@ public class Bank {
         this.database = (Database) database;
     }
 
+    public String getBankID() {
+        return this.bankID;
+    }
+
     public void addBranch(Branch branch) {
         database.addBranch(branch);
         // Add branch ID to this bank's list
