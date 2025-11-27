@@ -411,7 +411,7 @@ public class Database {
         }
         
         // Check DatabaseAdministratorAccount
-        doc = adminCollection.find(Filters.eq("adminID", username)).first();
+        doc = adminCollection.find(Filters.eq("username", username)).first();  // ✅ Now correct
         if (doc != null) {
             return documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
         }
