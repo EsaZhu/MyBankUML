@@ -1,4 +1,4 @@
-package test.integration_tests;
+package integration_tests;
 
 import database.Database;
 import domain.accounts.*;
