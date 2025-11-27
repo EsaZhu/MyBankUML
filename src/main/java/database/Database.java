@@ -83,6 +83,26 @@ public class Database {
             System.out.println("MongoDB connection closed.");
         }
     }
+
+    public MongoCollection<Document> getAccountCollection() {
+        return accountCollection;
+    }
+
+    public MongoCollection<Document> getTellerCollection() {
+        return tellerCollection;
+    }
+
+    public MongoCollection<Document> getAdminCollection() {
+        return adminCollection;
+    }
+
+    public MongoCollection<Document> getTransactionCollection() {
+        return transactionCollection;
+    }
+
+    public MongoCollection<Document> getBranchCollection() {
+        return branchCollection;
+    }
     
     // ----User Account Operations----
     public void addAccount(UserAccount account) {
@@ -121,12 +141,12 @@ public class Database {
     }
     
     // ----BankTellerAccount Operations----
-    public void addBankTeller(BankTellerAccount teller) {
+    public void addTeller(BankTellerAccount teller) {
         Document tellerDoc = tellerAccountToDocument(teller);
         tellerCollection.insertOne(tellerDoc);
     }
     
-    public BankTellerAccount retrieveBankTeller(String tellerID) {
+    public BankTellerAccount retrieveTeller(String tellerID) {
         Document doc = tellerCollection.find(Filters.eq("bankTellerID", tellerID)).first();
         if (doc != null) {
             return documentToBankTellerAccount(doc, BankTellerAccount.class);
@@ -134,16 +154,16 @@ public class Database {
         return null;
     }
     
-    public void updateBankTeller(String tellerID, BankTellerAccount updatedTeller) {
+    public void updateTeller(String tellerID, BankTellerAccount updatedTeller) {
         Document updates = tellerAccountToDocument(updatedTeller);
         tellerCollection.updateOne(Filters.eq("bankTellerID", tellerID), new Document("$set", updates));
     }
     
-    public void removeBankTeller(String tellerID) {
+    public void removeTeller(String tellerID) {
         tellerCollection.deleteOne(Filters.eq("bankTellerID", tellerID));
     }
     
-    public ArrayList<BankTellerAccount> getAllBankTellers() {
+    public ArrayList<BankTellerAccount> getAllTellers() {
         ArrayList<BankTellerAccount> tellers = new ArrayList<>();
         ArrayList<Document> tellerDocs = new ArrayList<>();
         tellerCollection.find().into(tellerDocs);
@@ -375,6 +395,17 @@ public class Database {
         }
         
         return null;
+    }
+
+    public Document findUserByUsername(String username) {
+        Document user = accountCollection.find(Filters.eq("username", username)).first();
+        if (user == null) {
+            user = tellerCollection.find(Filters.eq("username", username)).first();
+        }
+        if (user == null) {
+            user = adminCollection.find(Filters.eq("username", username)).first();
+        }
+        return user;
     }
 
     // For login and database admins to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
