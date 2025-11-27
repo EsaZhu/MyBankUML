@@ -161,7 +161,7 @@ class DatabaseTest {
         public ArrayList<UserAccount> searchAccountsByAttribute(String fieldName, Object value) {
             ArrayList<UserAccount> result = new ArrayList<>();
             for (UserAccount u : accounts.values()) {
-                if ("firstName".equals(fieldName) && value.equals(u.getUsername())) {
+                if ("username".equals(fieldName) && value.equals(u.getUsername())) {
                     result.add(u);
                 }
             }
