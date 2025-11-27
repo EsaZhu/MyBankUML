@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,6 @@ import domain.users.BankTellerAccount;
 import domain.users.DatabaseAdministratorAccount;
 import domain.bank.Bank;
 import domain.bank.Branch;
-import domain.transactions.Transaction;
 
 class DatabaseTest {
 
@@ -43,7 +41,7 @@ class DatabaseTest {
         db.updateAccount("U1", u1);
 
         UserAccount retrieved = db.retrieveAccount("U1");
-        assertEquals("Johnny", retrieved.getFirstName());
+        assertEquals("Johnny", retrieved.getUsername());
     }
 
     @Test
@@ -145,7 +143,7 @@ class DatabaseTest {
         }
 
         public void addTeller(BankTellerAccount teller) {
-            tellers.put(teller.getBankTellerID(), teller);
+            tellers.put(teller.getUsername(), teller);
         }
 
         public BankTellerAccount retrieveTeller(String tellerID) {
@@ -163,7 +161,7 @@ class DatabaseTest {
         public ArrayList<UserAccount> searchAccountsByAttribute(String fieldName, Object value) {
             ArrayList<UserAccount> result = new ArrayList<>();
             for (UserAccount u : accounts.values()) {
-                if ("firstName".equals(fieldName) && value.equals(u.getFirstName())) {
+                if ("firstName".equals(fieldName) && value.equals(u.getUsername())) {
                     result.add(u);
                 }
             }
