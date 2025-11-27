@@ -12,8 +12,7 @@ public class UserAccount implements IUser {
     private String lastName;
     private String passwordHash;
     private String branchId;
-    private Account[] accounts;
-    private List<Transaction> transactionList;
+    private List<Account> accounts;
 
     // ==Constructor==
     public UserAccount(String userID,
@@ -22,7 +21,7 @@ public class UserAccount implements IUser {
             String lastName,
             String passwordHash,
             String branchId,
-            Account[] accounts) {
+            List<Account> accounts) {
         this.userID = userID;
         this.username = username;
         this.firstName = firstName;
@@ -30,7 +29,6 @@ public class UserAccount implements IUser {
         this.passwordHash = passwordHash;
         this.branchId = branchId;
         this.accounts = accounts;
-        this.transactionList = new ArrayList<>();
     }
 
     @Override
@@ -49,14 +47,14 @@ public class UserAccount implements IUser {
     }
 
     public String getUserID() {
-        return userID;
+        return this.userID;
     }
 
     public String getBranchId() {
-        return branchId;
+        return this.branchId;
     }
 
-    public Account[] getAccounts() {
-        return accounts;
+    public List<Account> getAccounts() {
+        return this.accounts;
     }
 }

@@ -11,15 +11,16 @@ public class Savings extends Account {
     private double interestRate;
     private double minimumBalance;
 
-    public Savings(String userID, String name, String email, String passwordHash, double balance, Branch branch,
-            double interestRate, double minumumBalance) {
-        super(userID, name, email, passwordHash, balance, branch);
+    public Savings(String userID, String accountID, String accountHeader, double balance, double interestRate,
+            double minimumBalance) {
+        super(userID, accountID, "SAV", balance);
         this.interestRate = interestRate;
-        this.minimumBalance = minumumBalance;
+        this.minimumBalance = minimumBalance;
     }
 
     /**
      * Overridden withdraw method to enforce minimum balance
+     * 
      * @param amount
      */
     @Override
@@ -28,8 +29,10 @@ public class Savings extends Account {
             return;
         }
         Transaction withdrawTransaction = new Transaction(
-                "TXN_W" + System.currentTimeMillis(),
+                "TXN_" + super.accountHeader + "_W" + System.currentTimeMillis(),
                 super.getUserID(),
+                super.getAccountID(),
+                null,
                 null,
                 amount,
                 "WITHDRAW",
@@ -40,12 +43,15 @@ public class Savings extends Account {
 
     /**
      * Method to calculate and deposit interest
+     * 
      * @return
      */
     public double calculateInterest() {
         Transaction interestTransaction = new Transaction(
-                "TXN_I" + System.currentTimeMillis(),
+                "TXN_" + super.accountHeader + "_I" + System.currentTimeMillis(),
                 super.getUserID(),
+                super.getAccountID(),
+                null,
                 null,
                 super.getBalance() * interestRate,
                 "DEPOSIT",

@@ -12,9 +12,9 @@ public class Checking extends Account {
     private double minBalance; // enforced minimum balance on the account
     private double monthlyFee; // monthly maintenance fee
 
-    public Checking(String userID, String name, String email, String passwordHash, double balance, Branch branch,
-            double overdraftLimit, double minBalance, double monthlyFee) {
-        super(userID, name, email, passwordHash, balance, branch);
+    public Checking(String userID, String accountID, String accountStrHeader, double balance, double overdraftLimit,
+            double minBalance, double monthlyFee) {
+        super(userID, accountID, "CHK", balance);
         this.overdraftLimit = overdraftLimit;
         this.minBalance = minBalance;
         this.monthlyFee = monthlyFee;
@@ -33,8 +33,10 @@ public class Checking extends Account {
             return;
         }
         Transaction withdrawTransaction = new Transaction(
-                "TXN_W" + System.currentTimeMillis(),
+                "TXN_" + super.accountHeader + "_W" + System.currentTimeMillis(),
                 super.getUserID(),
+                super.getAccountID(),
+                null,
                 null,
                 amount,
                 "WITHDRAW",

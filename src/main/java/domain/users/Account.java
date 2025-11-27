@@ -7,21 +7,25 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public abstract class Account {
     protected String userID;
-    protected String accountStrHeader;
+    protected String accountID;
+    protected String accountHeader;
     protected double balance;
     protected List<Transaction> transactions;
 
-    public Account(String userID, String accountStrHeader, double balance) {
+    public Account(String userID, String accountID, String accountHeader, double balance) {
         this.userID = userID;
-        this.accountStrHeader = accountStrHeader;
+        this.accountID = accountID;
+        this.accountHeader = accountHeader;
         this.balance = balance;
         this.transactions = new ArrayList<>();
     }
 
     /**
      * Method to deposit amount
+     * 
      * @param amount
      */
     public void deposit(double amount) {
@@ -31,14 +35,15 @@ public abstract class Account {
         }
 
         Transaction depositTransaction = new Transaction(
-                "TXN_" + this.accountStrHeader + "_D" + System.currentTimeMillis(),
+                "TXN_" + this.accountHeader + "_D" + System.currentTimeMillis(),
                 this.userID,
+                this.accountID,
+                null,
                 null,
                 amount,
                 "DEPOSIT",
                 LocalDateTime.now(),
-                TransactionStatus.PENDING
-        );
+                TransactionStatus.PENDING);
 
         depositTransaction.execute();
         transactions.add(depositTransaction);
@@ -46,6 +51,7 @@ public abstract class Account {
 
     /**
      * Method to withdraw amount
+     * 
      * @param amount
      */
     public void withdraw(double amount) {
@@ -55,14 +61,15 @@ public abstract class Account {
         }
 
         Transaction withdrawTransaction = new Transaction(
-                "TXN_" + this.accountStrHeader + "_W" + System.currentTimeMillis(),
+                "TXN_" + this.accountHeader + "_W" + System.currentTimeMillis(),
                 this.userID,
+                this.accountID,
+                null,
                 null,
                 amount,
                 "WITHDRAW",
                 LocalDateTime.now(),
-                TransactionStatus.PENDING
-        );
+                TransactionStatus.PENDING);
 
         withdrawTransaction.execute();
         transactions.add(withdrawTransaction);
@@ -70,11 +77,12 @@ public abstract class Account {
 
     /**
      * Method to transfer funds to another account
+     * 
      * @param target
      * @param amount
      */
-    public void transferFunds(UserAccount target, double amount) {
-        if (target == null) {
+    public void transferFunds(UserAccount receiver, String receiverAccountID, double amount) {
+        if (receiver == null) {
             System.out.println("Target account cannot be null");
             return;
         }
@@ -85,29 +93,41 @@ public abstract class Account {
         }
 
         Transaction transferTransaction = new Transaction(
-                "TXN_" + this.accountStrHeader + "_T" + System.currentTimeMillis(),
+                "TXN_" + this.accountHeader + "_T" + System.currentTimeMillis(),
                 this.userID,
-                target.getUserID(),
+                this.accountID,
+                receiver.getUserID(),
+                receiverAccountID,
                 amount,
                 "TRANSFER",
                 LocalDateTime.now(),
-                TransactionStatus.PENDING
-        );
+                TransactionStatus.PENDING);
         transferTransaction.execute();
     }
 
     /*-------------------- Getters and Setters --------------------*/
 
-    public List<Transaction> getTransactions() {
-        return transactions;
+    public String getUserID(){
+        return this.userID;
     }
 
-    public double getBalance(){
+    public String getAccountID(){
+        return this.accountID;
+    }
+
+    public String getAccountHeader(){
+        return this.accountHeader;
+    }
+
+    public double getBalance() {
         return this.balance;
     }
 
-    public void setBalance(double amount){
+    public void setBalance(double amount) {
         this.balance = amount;
     }
-}
 
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+}
