@@ -186,16 +186,16 @@ public class DatabaseAdministratorAccount implements IUser {
 
     //manage customer accounts additional private functions (only available within the database admin)
     private void removeCustomer(String customerID) {
-        if (database.retrieveAccount(customerID) == null) {
+        if (database.retrieveUserAccount(customerID) == null) {
             System.out.println("Customer does not exist");
         } else {
-            database.removeAccount(customerID);
+            database.removeUserAccount(customerID);
         }
 
     }
 
     private void createCustomerAccounts(String userID, String name, String passwordHash, double balance, String branch) {
-        if (database.retrieveAccount(userID) != null) {
+        if (database.retrieveUserAccount(userID) != null) {
             System.out.println("Customer already exists");
         } else {
             UserAccount newUser = new UserAccount(userID, name, passwordHash, balance, branch);
@@ -210,12 +210,12 @@ public class DatabaseAdministratorAccount implements IUser {
 
 
     private void changeCustomerID(String currentCustomerID, String newCustomerID) {
-        if (database.retrieveAccount(currentCustomerID) == null) {
+        if (database.retrieveUserAccount(currentCustomerID) == null) {
             System.out.println("Customer does not exist");
         } else {
-            UserAccount currentUser = database.retrieveAccount(currentCustomerID);
+            UserAccount currentUser = database.retrieveUserAccount(currentCustomerID);
             UserAccount newUser = new UserAccount(newCustomerID, currentUser.getUsername(), currentUser.getPasswordHash(), currentUser.getBalance(), currentUser.getBranchID());
-            database.updateAccount(currentCustomerID, newUser);
+            database.updateUserAccount(currentCustomerID, newUser);
         }
 
     }
@@ -247,7 +247,7 @@ public class DatabaseAdministratorAccount implements IUser {
 
     //changed this to boolean
     public boolean searchAccounts(String id) {
-        return database.retrieveAccount(id) != null && database.retrieveBankTeller(id) != null;
+        return database.retrieveUserAccount(id) != null && database.retrieveBankTeller(id) != null;
     }
 
 

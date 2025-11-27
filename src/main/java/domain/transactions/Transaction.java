@@ -63,7 +63,7 @@ public class Transaction {
      */
     public static List<Transaction> getTransactionHistory(String userID, String accountID) {
         Database db = Database.getInstance();
-        UserAccount user = (UserAccount) db.retrieveAccount(accountID);
+        UserAccount user = (UserAccount) db.retrieveUserAccount(accountID);
         Account account = user.getAccounts().stream()
                 .filter(acc -> acc.getAccountID().equals(accountID))
                 .findFirst()
@@ -83,7 +83,7 @@ public class Transaction {
             return false;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveUserAccount(this.sourceAccountID);
         Account sourceAccount = sourceUser.getAccounts().stream()
                 .filter(acc -> acc.getAccountID().equals(this.sourceAccountID))
                 .findFirst()
@@ -106,7 +106,7 @@ public class Transaction {
                 // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveUserAccount(this.receiverAccountID);
                 Account receiverAccount = receiverUser.getAccounts().stream()
                         .filter(acc -> acc.getAccountID().equals(this.receiverAccountID))
                         .findFirst()
@@ -136,7 +136,7 @@ public class Transaction {
      */
     public boolean validateTransaction() {
         Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveUserAccount(this.sourceAccountID);
         Account sourceAccount = sourceUser.getAccounts().stream()
                 .filter(acc -> acc.getAccountID().equals(this.sourceAccountID))
                 .findFirst()
@@ -148,7 +148,7 @@ public class Transaction {
             case "WITHDRAW":
                 return sourceAccount.getBalance() >= this.amount;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveUserAccount(this.receiverAccountID);
                 Account receiverAccount = receiverUser.getAccounts().stream()
                         .filter(acc -> acc.getAccountID().equals(this.receiverAccountID))
                         .findFirst()
@@ -173,7 +173,7 @@ public class Transaction {
             return false;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = (UserAccount) db.retrieveUserAccount(this.sourceAccountID);
         Account sourceAccount = sourceUser.getAccounts().stream()
                 .filter(acc -> acc.getAccountID().equals(this.sourceAccountID))
                 .findFirst()
@@ -196,7 +196,7 @@ public class Transaction {
                 // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
+                UserAccount receiverUser = (UserAccount) db.retrieveUserAccount(this.receiverAccountID);
                 Account receiverAccount = receiverUser.getAccounts().stream()
                         .filter(acc -> acc.getAccountID().equals(this.receiverAccountID))
                         .findFirst()
