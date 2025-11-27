@@ -7,7 +7,6 @@ import domain.users.BankTellerAccount;
 import domain.users.IUser;
 import domain.users.UserAccount;
 
-// removed lombok usage to avoid external dependency
 public class Bank {
     public String name;
     public String bankID;
@@ -16,13 +15,13 @@ public class Bank {
     public ArrayList<IUser> resultList;
     public Database database;
 
-    public Bank(String name, String bankID, ArrayList<IUser> resultList, Database database) {
+    public Bank(String name, String bankID, ArrayList<IUser> resultList, Object database) {
         this.name = name;
         this.bankID = bankID;
         this.branches = new ArrayList<>();
         this.resultList = resultList;
         // Database is connected to in main
-        this.database = database;
+        this.database = (Database) database;
     }
 
     public void addBranch(Branch branch) {
