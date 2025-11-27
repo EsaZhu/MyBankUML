@@ -252,7 +252,7 @@ public class DatabaseAdministratorAccount implements IUser {
             System.out.println("Customer does not exist");
         } else {
             UserAccount currentUser = database.retrieveUserAccount(currentCustomerID);
-            UserAccount newUser = new UserAccount(newCustomerID, currentUser.getUsername(), currentUser.getFirstName, currentUser.getLastName, getPasswordHash(), currentUser.getBranchId(), currentUser.getAccounts());
+            UserAccount newUser = new UserAccount(newCustomerID, currentUser.getUsername(), currentUser.getFirstName(), currentUser.getLastName(), getPasswordHash(), currentUser.getBranchID(), currentUser.getAccounts());
             database.updateUserAccount(currentCustomerID, newUser);
         }
 

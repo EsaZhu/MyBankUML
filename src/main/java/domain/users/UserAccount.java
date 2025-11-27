@@ -51,11 +51,11 @@ public class UserAccount implements IUser {
     }
 
     public String getFirstName() {
-        return this.userID;
+        return this.firstName;
     }
 
     public String getLastName() {
-        return this.userID;
+        return this.lastName;
     }
 
     public String getBranchID() {
