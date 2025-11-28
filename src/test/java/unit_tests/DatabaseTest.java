@@ -82,7 +82,7 @@ class DatabaseTest {
         BankTellerAccount teller = new BankTellerAccount("T01", "cashier", "JC", "Denton", "hashedpassword", "BR01", null);
         db.addTeller(teller);
 
-        BankTellerAccount retrieved = db.retrieveTeller("T1");
+        BankTellerAccount retrieved = db.retrieveTeller("T01");
         assertEquals(teller, retrieved);
     }
 
@@ -97,8 +97,8 @@ class DatabaseTest {
 
     @Test
     void testSearchByAttribute() {
-        UserAccount u1 = new UserAccount("U1", "John", null, null, null, null, null);
-        UserAccount u2 = new UserAccount("U2", "John", null, null, null, null, null);
+        UserAccount u1 = new UserAccount("U1", "J'onn", "John", null, null, null, null);
+        UserAccount u2 = new UserAccount("U2", "J'onn", "John", null, null, null, null);
         db.addAccount(u1);
         db.addAccount(u2);
 
