@@ -75,6 +75,7 @@ public class AccountsTests {
     assertEquals(expected, testCard.getBalance());
   }
 
+  // --------------------- Fake Database Mock ---------------------
   public class FakeDatabase extends Database {
     public UserAccount savedUserAccount;
 

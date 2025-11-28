@@ -71,6 +71,8 @@ public class TransactionTests {
         assertEquals(500.0, receiverAccount.getBalance());
     }
 
+
+    // --------------------- Fake Database Mock ---------------------
     public class FakeDatabase extends Database {
 
         List<UserAccount> accounts = new ArrayList<>();

@@ -108,7 +108,7 @@ class DatabaseTest {
         assertTrue(results.contains(u2));
     }
 
-    // Database mock up
+    // --------------------- Fake Database Mock ---------------------
     static class FakeDatabase {
         HashMap<String, UserAccount> accounts = new HashMap<>();
         HashMap<String, BankTellerAccount> tellers = new HashMap<>();
@@ -153,7 +153,7 @@ class DatabaseTest {
         }
 
         public void addTeller(BankTellerAccount teller) {
-            tellers.put(teller.getUsername(), teller);
+            tellers.put(teller.getBankTellerID(), teller);
         }
 
         public BankTellerAccount retrieveTeller(String tellerID) {
@@ -172,6 +172,8 @@ class DatabaseTest {
             ArrayList<UserAccount> result = new ArrayList<>();
             for (UserAccount u : accounts.values()) {
                 if ("username".equals(fieldName) && value.equals(u.getUsername())) {
+                    result.add(u);
+                } else if ("firstName".equals(fieldName) && value.equals(u.getFirstName())) {
                     result.add(u);
                 }
             }

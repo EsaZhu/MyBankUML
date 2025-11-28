@@ -37,7 +37,7 @@ public class BankTest {
         assertTrue(list.contains(b2));
     }
 
-    // Database stub
+    // --------------------- Fake Database Mock ---------------------
     class FakeDatabase extends Database {
         public ArrayList<Branch> addedBranches = new ArrayList<>();
         public ArrayList<String> updatedBanks = new ArrayList<>();

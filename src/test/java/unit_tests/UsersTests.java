@@ -62,7 +62,7 @@ public class UsersTests {
     assertEquals(t.getStatus(), TransactionStatus.REVERSED);
   }
 
-  // Database mock up
+  // --------------------- Fake Database Mock ---------------------
   static class FakeDatabase extends Database {
     public Transaction savedTransaction;
     public UserAccount savedUserAccount;
