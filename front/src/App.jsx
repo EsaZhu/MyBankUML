@@ -53,21 +53,16 @@ export default function App() {
       const accountParams = user.role === ROLES.CUSTOMER ? { accountId: user.id } : {};
       const [acctList, txList, userDoc] = await Promise.all([
         fetchAccounts(accountParams),
-        // For customers we request scoped transactions to their userId;
-        // tellers/admins can see all.
-        fetchTransactions(user.role === ROLES.CUSTOMER ? user.id : undefined),
+        // Fetch all transactions; we'll filter client-side for the customer.
+        fetchTransactions(undefined),
         user.role === ROLES.CUSTOMER ? fetchUser(user.id) : Promise.resolve(null),
       ]);
       setAccounts(acctList);
-      // If customer, filter transactions by transactionHistory list and
-      // additionally by account id in case history is out-of-sync.
+      // If customer, limit to transactions listed in transactionHistory.
       if (user.role === ROLES.CUSTOMER) {
         const historyIds = new Set(userDoc?.transactionHistory || []);
         const filtered = txList.filter((tx) => {
-          const inHistory = historyIds.has(tx.id);
-          const touchesUser =
-            tx.account?.includes?.(user.id) || tx.receiverAccountID?.includes?.(user.id) || tx.sourceAccountID?.includes?.(user.id);
-          return inHistory || touchesUser;
+          return historyIds.has(tx.id);
         });
         setTransactions(filtered);
       } else {

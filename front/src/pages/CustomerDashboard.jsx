@@ -9,7 +9,11 @@ export default function CustomerDashboard({ user, accounts, transactions, onRefr
   const [tab, setTab] = useState("overview"); // overview | accounts | transfer
   const displayName =
     user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.name;
-  const filteredTransactions = useMemo(() => transactions || [], [transactions]);
+  const safeAccounts = useMemo(() => (Array.isArray(accounts) ? accounts : []), [accounts]);
+  const filteredTransactions = useMemo(
+    () => (Array.isArray(transactions) ? transactions : []),
+    [transactions]
+  );
 
   return (
     <section>
@@ -51,11 +55,11 @@ export default function CustomerDashboard({ user, accounts, transactions, onRefr
       {tab === "transfer" && (
         <>
           <h3>Transfer / Deposit / Withdraw</h3>
-          <TransferForm accounts={accounts} onSuccess={onRefresh} />
+          <TransferForm accounts={safeAccounts} onSuccess={onRefresh} />
 
           <div className="grid-2" style={{ marginTop: "12px" }}>
-            <QuickTransactionForm type="deposit" accounts={accounts} onRefresh={onRefresh} />
-            <QuickTransactionForm type="withdraw" accounts={accounts} onRefresh={onRefresh} />
+            <QuickTransactionForm type="deposit" accounts={safeAccounts} onRefresh={onRefresh} />
+            <QuickTransactionForm type="withdraw" accounts={safeAccounts} onRefresh={onRefresh} />
           </div>
 
           <h3 style={{ marginTop: "16px" }}>Recent Transactions</h3>
@@ -123,7 +127,7 @@ function QuickTransactionForm({ type, accounts, onRefresh }) {
         <span>Account</span>
         <select value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
           <option value="">Select account</option>
-          {accounts.map((a) => (
+          {(accounts || []).map((a) => (
             <option key={a.id} value={a.id}>
               {a.id} ({a.type})
             </option>

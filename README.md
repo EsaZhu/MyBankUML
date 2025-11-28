@@ -90,6 +90,6 @@ git push origin feature/<module-name>
 - Make the script executable: 
 - Run it from project root 
 ```bash
-chmod +x scripts/run-main.sh
-scripts/run-main.sh
+chmod +x scripts/run-stack.sh         
+scripts/run-stack.sh         
 ```

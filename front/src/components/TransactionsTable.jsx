@@ -1,6 +1,7 @@
 import React from "react";
 
 export default function TransactionsTable({ transactions }) {
+  const rows = Array.isArray(transactions) ? transactions : [];
   return (
     <div className="table-wrapper">
       <table>
@@ -15,11 +16,11 @@ export default function TransactionsTable({ transactions }) {
           </tr>
         </thead>
         <tbody>
-          {transactions && transactions.length > 0 ? (
-            transactions.map((tx) => (
+          {rows.length > 0 ? (
+            rows.map((tx) => (
               <tr key={tx.id}>
                 <td>{tx.id}</td>
-                <td>{tx.date}</td>
+                <td>{tx.date || ""}</td>
                 <td>{tx.type}</td>
                 <td>{tx.account || tx.sourceAccountID || ""}</td>
                 <td>{tx.receiverAccountID || ""}</td>
