@@ -97,13 +97,13 @@ public class Transaction {
                 sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "WITHDRAW":
                 sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
                 UserAccount receiverUser = (UserAccount) db.retrieveUserAccount(this.receiverAccountID);
@@ -120,8 +120,8 @@ public class Transaction {
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
                 receiverAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
-                // db.updateAccount(this.receiverAccountID, receiverUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.receiverAccountID, receiverUser);
                 return true;
             default:
                 this.status = TransactionStatus.FAILED;
@@ -187,13 +187,13 @@ public class Transaction {
                 sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "WITHDRAW":
                 sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
                 UserAccount receiverUser = (UserAccount) db.retrieveUserAccount(this.receiverAccountID);
@@ -210,8 +210,8 @@ public class Transaction {
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
                 receiverAccount.getTransactions().add(this);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
-                // db.updateAccount(this.receiverAccountID, receiverUser);
+                db.updateUserAccount(this.sourceAccountID, sourceUser);
+                db.updateUserAccount(this.receiverAccountID, receiverUser);
                 return true;
             default:
                 this.status = TransactionStatus.FAILED;
