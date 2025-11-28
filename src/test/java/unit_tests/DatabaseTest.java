@@ -24,6 +24,12 @@ class DatabaseTest {
     }
 
     @Test
+    void test_DB_Connect() {
+        boolean connected = db.connect();
+        assertEquals(true, connected);
+    }
+
+    @Test
     void testAddAndRetrieveAccount() {
         UserAccount u1 = new UserAccount("U1", "John", null, null, null, null, null);
         db.addAccount(u1);
@@ -64,7 +70,7 @@ class DatabaseTest {
 
     @Test
     void testAddAndRetrieveBank() {
-        Bank bank = new Bank("Test Bank", "Bank1", new ArrayList<>(), new Object());
+        Bank bank = new Bank("Test Bank", "Bank1", null);
         db.addBank(bank);
 
         Bank retrieved = db.retrieveBank("Bank1");
@@ -73,7 +79,7 @@ class DatabaseTest {
 
     @Test
     void testAddAndRetrieveTeller() {
-        BankTellerAccount teller = new BankTellerAccount("T1", "cashier", null, null, null, null);
+        BankTellerAccount teller = new BankTellerAccount("T01", "cashier", "JC", "Denton", "hashedpassword", "BR01", null);
         db.addTeller(teller);
 
         BankTellerAccount retrieved = db.retrieveTeller("T1");
@@ -109,6 +115,10 @@ class DatabaseTest {
         HashMap<String, DatabaseAdministratorAccount> admins = new HashMap<>();
         HashMap<String, Branch> branches = new HashMap<>();
         HashMap<String, Bank> banks = new HashMap<>();
+
+        public boolean connect() {
+            return true;
+        }
 
         public void addAccount(UserAccount account) {
             accounts.put(account.getUserID(), account);

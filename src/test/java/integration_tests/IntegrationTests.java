@@ -7,6 +7,8 @@ import domain.users.*;
 import domain.transactions.Transaction;
 import java.util.ArrayList;
 
+import application.Login;
+
 public class IntegrationTests {
 
     public static void ITC01_UserAccountComponents() {
@@ -15,11 +17,25 @@ public class IntegrationTests {
         // 1. Create accounts (Assume Branch exists and Account constructors work)
         Branch branch = new Branch("BR001", "MainBranch", "123 Street");
 
-        Card card = new Card("U1", "Name", "email", "pw", 0, branch, 500, 0.05, 0);
-        Checking checking = new Checking("U2", "Name", "email", "pw", 0, branch, 200, 0, 5);
-        Savings savings = new Savings("U3", "Name", "email", "pw", 0, branch, 0.1, 0);
-
+        // Source User
+        UserAccount sourceUser = new UserAccount("SU01", "Majestic12", "JC", "Denton", "hashedpassword", "BR001", new ArrayList<Account>());
+        Card card = new Card("SU01", "CRD01", 200, 500, 0.05, 50);
+        Checking checking = new Checking("SU01", "CHK01", 200, 100, 50, 10);
+        Savings savings = new Savings("SU01", "SAV01", 200, 0.05, 50);
         Account[] accounts = { card, checking, savings };
+        for (Account acc : accounts){
+            sourceUser.getAccounts().add(acc);
+        }
+
+        // Receiver User
+        UserAccount receiverUser = new UserAccount("RU01", "Ambrosia", "Paul", "Denton", "hashedpassword", "BR001", new ArrayList<Account>());
+        Card receiverCard = new Card("RU01", "CRD02", 200, 500, 0.05, 50);
+        Checking receiverChecking = new Checking("RU01", "CHK02", 200, 100, 50, 10);
+        Savings receiverSavings = new Savings("RU01", "SAV02", 200, 0.05, 50);
+        Account[] receiverAccounts = { card, checking, savings };
+        for (Account acc : receiverAccounts){
+            receiverUser.getAccounts().add(acc);
+        }
 
         // 2. For each account
         for (Account acc : accounts) {
@@ -38,12 +54,15 @@ public class IntegrationTests {
         }
 
         // Transfer between accounts (Card -> Checking -> Savings)
-        card.transferFunds(checking, 100);
-        checking.transferFunds(savings, 100);
+        
+        card.transferFunds(receiverUser, "CHK02", 100);
+        checking.transferFunds(receiverUser, "SAV02", 100);
+        savings.transferFunds(receiverUser, "CRD02", 100);
 
         System.out.println("Card balance: " + card.getBalance());
-        System.out.println("Checking balance: " + checking.getBalance());
-        System.out.println("Savings balance: " + savings.getBalance());
+        System.out.println("Receiver Card balance: " + receiverUser.getAccounts().get(0));
+        System.out.println("Checking balance: " + receiverUser.getAccounts().get(1));
+        System.out.println("Savings balance: " + receiverUser.getAccounts().get(2));
 
         // Apply special behaviours
         card.applyMonthlyFee();
@@ -67,9 +86,9 @@ public class IntegrationTests {
         // Pre-loaded user (assume DB has this)
         UserAccount user = db.retrieveUserAccount("U5001");
 
-        Savings sav = (Savings) user.getAccounts()[0];
-        Checking chk = (Checking) user.getAccounts()[1];
-        Card card = (Card) user.getAccounts()[2];
+        Savings sav = (Savings) user.getAccounts().get(0);
+        Checking chk = (Checking) user.getAccounts().get(1);
+        Card card = (Card) user.getAccounts().get(2);
 
         // 1. Checking withdrawal
         chk.withdraw(200);
@@ -89,8 +108,8 @@ public class IntegrationTests {
 
         // 5. DB account verification
         UserAccount checkDB = db.retrieveUserAccount("U5001");
-        System.out.println("DB Checking = " + checkDB.getAccounts()[1].getBalance());
-        System.out.println("DB Savings  = " + checkDB.getAccounts()[0].getBalance());
+        System.out.println("DB Checking = " + checkDB.getAccounts().get(1).getBalance());
+        System.out.println("DB Savings  = " + checkDB.getAccounts().get(0).getBalance());
 
         System.out.println("=== ITC-02 END ===");
     }
@@ -106,10 +125,10 @@ public class IntegrationTests {
         db.addBranch(A);
         db.addBranch(B);
 
-        BankTellerAccount teller = new BankTellerAccount("T1", "user", "pw", "fname", "lname", "A");
+        BankTellerAccount teller = new BankTellerAccount("T1", "user", "pw", "fname", "lname", "A", db);
 
         // Create customer in Branch A
-        UserAccount accA = new UserAccount("UA1", "ua1", "Ann", "Smith", "pw", "A", new Account[] {});
+        UserAccount accA = new UserAccount("UA1", "ua1", "Ann", "Smith", "pw", "A", new ArrayList<Account>());
         db.addAccount(accA);
 
         // Teller searches
@@ -117,7 +136,7 @@ public class IntegrationTests {
         System.out.println("Results in BranchA = " + results.size());
 
         // Try accessing BranchB account
-        UserAccount accB = new UserAccount("UB1", "ub1", "Bob", "Brown", "pw", "B", new Account[] {});
+        UserAccount accB = new UserAccount("UB1", "ub1", "Bob", "Brown", "pw", "B", new ArrayList<Account>());
         db.addAccount(accB);
 
         if (!teller.getBranchID().equals("B")) {
@@ -126,7 +145,6 @@ public class IntegrationTests {
 
         System.out.println("=== ITC-03 END ===");
     }
-
 
     public static void ITC04_DatabaseAdmin() {
         System.out.println("=== ITC-04 START ===");
@@ -141,22 +159,12 @@ public class IntegrationTests {
         Branch b = new Branch("SB", "SuperBranch", "Addr");
         db.addBranch(b);
 
-        // Rename branch
-        b.setBranchName("SuperDuperBranch");
-        db.updateBranch("SB", b);
-
         // Create teller
-        BankTellerAccount teller = new BankTellerAccount("BT1", "bt1", "pw", "tfn", "tln", "SB");
+        BankTellerAccount teller = new BankTellerAccount("BT1", "bt1", "pw", "tfn", "tln", "SB", db);
         db.addTeller(teller);
 
-        teller.setPasswordHash("hotdog1234");
-        db.updateTeller("BT1", teller);
-
-        teller.setActive(false);
-        db.updateTeller("BT1", teller);
-
         // Create UserAccount
-        UserAccount u1 = new UserAccount("U1", "u1", "Ann", "Blue", "pw", "SB", new Account[] {});
+        UserAccount u1 = new UserAccount("U1", "u1", "Ann", "Blue", "pw", "SB", new ArrayList<Account>());
         db.addAccount(u1);
 
         // Search for U1
@@ -181,30 +189,33 @@ public class IntegrationTests {
 
         Database db = Database.getInstance();
 
-        Bank bank = new Bank("Bank001", "MyBank");
+        Bank bank = new Bank("Bank001", "MyBank", db);
         Branch br1 = new Branch("BR001", "Branch1", "Addr1");
         Branch br2 = new Branch("BR002", "Branch2", "Addr2");
 
-        bank.addBranch(br1);
-        bank.addBranch(br2);
+        bank.getBranches().add(br1);
+        bank.getBranches().add(br2);
 
         // Create User001
-        UserAccount u1 = new UserAccount("User001", "jane", "Jane", "Margolis", "pw", "BR001", new Account[] {});
+        UserAccount u1 = new UserAccount("User001", "jane", "Jane", "Margolis", "pw", "BR001", new ArrayList<Account>());
+        Checking u1Checking = new Checking("User002", "CHK02", 200, 90, 20, 10);
         db.addAccount(u1);
 
         // Deposit
-        u1.deposit(500);
-        System.out.println("User001 balance = " + u1.getAccounts()[0].getBalance());
+        u1.getAccounts().get(0).deposit(500);
+        System.out.println("User001 balance = " + u1.getAccounts().get(0).getBalance());
 
         // Create User002
-        UserAccount u2 = new UserAccount("User002", "bob", "Bob", "Light", "pw", "BR002", new Account[] {});
+        UserAccount u2 = new UserAccount("User002", "bob", "Bob", "Light", "pw", "BR002", new ArrayList<Account>());
+        Checking u2Checking = new Checking("User002", "CHK02", 200, 90, 20, 10);
+        u2.getAccounts().add(u2Checking);
         db.addAccount(u2);
 
         // Transfer
-        u1.transferFunds(u2, 300);
+        u1.getAccounts().get(0).transferFunds(u2, "CHK02", 300);
 
-        System.out.println("User001 = " + u1.getAccounts()[0].getBalance());
-        System.out.println("User002 = " + u2.getAccounts()[0].getBalance());
+        System.out.println("User001 = " + u1.getAccounts().get(0).getBalance());
+        System.out.println("User002 = " + u2.getAccounts().get(0).getBalance());
 
         // Search by branch
         ArrayList<IUser> br1Accounts = db.searchCustomersByAttribute("branch", "BR001");

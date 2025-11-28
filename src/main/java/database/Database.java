@@ -39,8 +39,8 @@ public class Database {
     private static final String CONNECTION_STRING = "mongodb+srv://AdminUser:Test1234@cluster.leyizej.mongodb.net/?appName=Cluster";
     private static final String DATABASE_NAME = "Bank";
     
-    // Private constructor for singleton pattern
-    private Database() {
+    // Protected constructor for singleton pattern and mocking DB
+    protected Database() {
         try {
             mongoClient = MongoClients.create(CONNECTION_STRING);
             mongoDatabase = mongoClient.getDatabase(DATABASE_NAME);

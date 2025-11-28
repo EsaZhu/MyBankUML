@@ -60,11 +60,9 @@ public class Savings extends Account {
         interestTransaction.execute();
         return super.getBalance() * interestRate;
     }
-
-    /**
-     * GUI display method to show receipt of interest calculation
-     */
-    public void receipt() {
-        // TO BE REPLACED BY GUI
+    
+    /*-------------------- Getters and Setters --------------------*/
+    public double receipt() {
+        return super.getBalance() * interestRate;
     }
 }
