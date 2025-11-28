@@ -13,7 +13,7 @@ public class Transaction {
     private String transactionID;
     private String sourceUserID;
     private String sourceAccountID;
-  
+
     private String receiverAccountID;
     private String receiverUserID;
     private double amount;
@@ -22,7 +22,8 @@ public class Transaction {
     private TransactionStatus status;
 
     // No-arg constructor for reflection/deserialization
-    public Transaction() {}
+    public Transaction() {
+    }
 
     /**
      * @param transactionID
@@ -99,14 +100,12 @@ public class Transaction {
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
                 db.updateUserAccount(sourceUser.getUserID(), sourceUser);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "WITHDRAW":
                 sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
                 this.status = TransactionStatus.COMPLETED;
                 sourceAccount.getTransactions().add(this);
                 db.updateUserAccount(sourceUser.getUserID(), sourceUser);
-                // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
                 boolean sameUser = sourceUser != null && this.receiverAccountID != null
@@ -148,7 +147,8 @@ public class Transaction {
             case "WITHDRAW":
                 return sourceAccount != null && sourceAccount.getBalance() >= this.amount;
             case "TRANSFER":
-                if (sourceAccount == null) return false;
+                if (sourceAccount == null)
+                    return false;
                 UserAccount receiverUser = findUserByAccountId(this.receiverAccountID);
                 Account receiverAccount = findAccountById(receiverUser, this.receiverAccountID);
                 if (receiverAccount == null) {
@@ -258,15 +258,18 @@ public class Transaction {
     }
 
     private UserAccount findUserByAccountId(String accountId) {
-        if (accountId == null) return null;
+        if (accountId == null)
+            return null;
         String userId = accountId.contains("-") ? accountId.substring(0, accountId.indexOf("-")) : accountId;
         Database db = Database.getInstance();
         return db.retrieveUserAccount(userId);
     }
 
     private Account findAccountById(UserAccount user, String accountId) {
-        if (user == null || accountId == null) return null;
-        if (user.getAccounts() == null) return null;
+        if (user == null || accountId == null)
+            return null;
+        if (user.getAccounts() == null)
+            return null;
         return user.getAccounts().stream()
                 .filter(acc -> acc.getAccountID().equals(accountId))
                 .findFirst()

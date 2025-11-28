@@ -11,6 +11,16 @@ import application.Login;
 
 public class IntegrationTests {
 
+    public static void Main(String[] args){
+        System.out.println("Running back-end integration testing... ");
+        ITC01_UserAccountComponents();
+        ITC02_MultiAccountTransaction();
+        ITC03_TellerBranchAccess();
+        ITC04_DatabaseAdmin();
+        ITC05_BankBranchIntegration();
+        ITC06_LoginRoles();
+    }
+
     public static void ITC01_UserAccountComponents() {
         System.out.println("=== ITC-01 START ===");
 
