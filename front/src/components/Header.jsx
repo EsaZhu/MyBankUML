@@ -8,7 +8,7 @@ export default function Header({ user, onLogout }) {
     <header className="top-bar">
       <div>
         <h1 className="logo">MyBankUML</h1>
-        <p className="subtitle">Simple Web UI Prototype</p>
+        <p className="subtitle"> Web UI </p>
       </div>
 
       <div>

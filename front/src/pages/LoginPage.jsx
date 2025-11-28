@@ -51,9 +51,7 @@ export default function LoginPage({ onLogin }) {
       <div className="card login-card">
         <h2>Login</h2>
         <p className="muted">
-          Enter your MyBank credentials. The backend login.java service will validate your
-          username and password against the database and return your role (customer, bank
-          teller, or database admin).
+          Sign in to access your MyBank account.
         </p>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -85,9 +83,8 @@ export default function LoginPage({ onLogin }) {
           </button>
 
           <p className="muted small">
-            For now, demo logins are available with users customer/customer123, teller/teller123,
-            and admin/admin123. Replace the stubbed authenticateUser call with the real backend
-            logic once login.java is implemented.
+            Your credentials will be verified securely against the MyBank database.
+            Please enter your valid username and password to continue.
           </p>
         </form>
       </div>

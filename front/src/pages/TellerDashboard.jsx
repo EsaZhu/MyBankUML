@@ -65,15 +65,14 @@ export default function TellerDashboard({ user, accounts, transactions }) {
         <div className="card form-card">
           <h3>Create a Customer</h3>
           <p className="muted">
-            Capture customer details and open their primary account. This will create a user in
-            Mongo (UserAccount).
+            Capture customer details and open their primary account. 
           </p>
           <CreateCustomerForm />
 
           <div className="card" style={{ marginTop: "12px" }}>
             <h4>Account Maintenance</h4>
             <p className="muted">
-              Open or close a customer account. Wire these actions to the teller backend
+              Open or close a customer account. 
               endpoints.
             </p>
             <AccountMaintenance />
@@ -97,7 +96,7 @@ export default function TellerDashboard({ user, accounts, transactions }) {
                     <th>Account ID</th>
                     <th>Customer Name</th>
                     <th>Type</th>
-                    <th>Branch</th>
+                    <th>Branch ID</th>
                     <th>Balance</th>
                     <th></th>
                   </tr>
