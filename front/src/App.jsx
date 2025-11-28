@@ -9,7 +9,7 @@ import CustomerDashboard from "./pages/CustomerDashboard.jsx";
 import TellerDashboard from "./pages/TellerDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import TellerCustomerProfile from "./pages/TellerCustomerProfile.jsx";
-import { fetchAccounts, fetchTransactions } from "./api";
+import { fetchAccounts, fetchTransactions, fetchUser } from "./api";
 
 const ROLES = {
   CUSTOMER: "CUSTOMER",
@@ -51,12 +51,28 @@ export default function App() {
     setDataError("");
     try {
       const accountParams = user.role === ROLES.CUSTOMER ? { accountId: user.id } : {};
-      const [acctList, txList] = await Promise.all([
+      const [acctList, txList, userDoc] = await Promise.all([
         fetchAccounts(accountParams),
+        // For customers we request scoped transactions to their userId;
+        // tellers/admins can see all.
         fetchTransactions(user.role === ROLES.CUSTOMER ? user.id : undefined),
+        user.role === ROLES.CUSTOMER ? fetchUser(user.id) : Promise.resolve(null),
       ]);
       setAccounts(acctList);
-      setTransactions(txList);
+      // If customer, filter transactions by transactionHistory list and
+      // additionally by account id in case history is out-of-sync.
+      if (user.role === ROLES.CUSTOMER) {
+        const historyIds = new Set(userDoc?.transactionHistory || []);
+        const filtered = txList.filter((tx) => {
+          const inHistory = historyIds.has(tx.id);
+          const touchesUser =
+            tx.account?.includes?.(user.id) || tx.receiverAccountID?.includes?.(user.id) || tx.sourceAccountID?.includes?.(user.id);
+          return inHistory || touchesUser;
+        });
+        setTransactions(filtered);
+      } else {
+        setTransactions(txList);
+      }
     } catch (err) {
       setDataError(err.message || "Failed to load data from server");
     } finally {

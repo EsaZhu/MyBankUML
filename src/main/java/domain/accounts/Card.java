@@ -1,16 +1,19 @@
 package domain.accounts;
 
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
+import domain.users.Account;
 import domain.users.UserAccount;
 
-public class Card extends UserAccount {
+public class Card extends Account {
 
     private double cardLimit; // maximum credit limit
     private double interest;
     private double minimumPayment;
 
-    public Card(String userID, String name, String email, String passwordHash, double balance, domain.bank.Branch branch,
-            double cardLimit, double interest, double minimumPayment) {
-        super(userID, name, email, passwordHash, balance, branch);
+    public Card(String userID, String accountID, double balance, double cardLimit, double interest,
+            double minimumPayment) {
+        super(userID, accountID, "CRD", balance);
         this.cardLimit = cardLimit;
         this.interest = interest;
         this.minimumPayment = minimumPayment;
@@ -27,6 +30,17 @@ public class Card extends UserAccount {
         if (amount <= 0 || super.getBalance() + amount > this.cardLimit) {
             return;
         }
+        Transaction depositTransaction = new Transaction(
+                "TXN_" + super.accountHeader + "_D" + System.currentTimeMillis(),
+                super.getUserID(),
+                super.getAccountID(),
+                null,
+                null,
+                amount,
+                "DEPOSIT",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        depositTransaction.execute();
         super.deposit(amount);
     }
 

@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Thu Nov 27 17:39:53 EST 2025
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1764283193954
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.mockito\:mockito-core\:pom\:5.3.0 from/to central (https\://repo.maven.apache.org/maven2)\: repo.maven.apache.org\: nodename nor servname provided, or not known

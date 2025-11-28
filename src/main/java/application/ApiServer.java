@@ -1,13 +1,20 @@
 package application;
 
-import com.mongodb.client.model.Filters;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import database.Database;
+import domain.accounts.Card;
+import domain.accounts.Checking;
+import domain.accounts.Savings;
+import domain.transactions.Transaction;
+import domain.users.Account;
+import domain.users.BankTellerAccount;
+import domain.users.DatabaseAdministratorAccount;
+import domain.users.IUser;
+import domain.users.UserAccount;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.Map.Entry;
+import java.time.LocalDateTime;
 
 /**
  * Lightweight HTTP API that exposes a minimal set of endpoints backed by the Mongo Database class.
@@ -48,6 +55,7 @@ public class ApiServer {
         server.createContext("/api/tellers", new TellersHandler(db));
         server.createContext("/api/transactions/transfer", new TransferHandler(db));
         server.createContext("/api/accounts/manage", new AccountMaintenanceHandler(db));
+        server.createContext("/api/users", new UsersHandler(db));
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         System.out.println("API server listening on http://localhost:" + port);
@@ -141,32 +149,40 @@ public class ApiServer {
                     return;
                 }
 
-                Document user = db.findUserByUsername(username);
+                IUser user = db.retrieveUserByUsername(username);
                 if (user == null) {
-                    // Fallback: allow ID-based login if username is not stored.
-                    user = db.getAccountCollection().find(Filters.eq("userID", username)).first();
-                    if (user == null) user = db.getTellerCollection().find(Filters.eq("bankTellerID", username)).first();
-                    if (user == null) user = db.getAdminCollection().find(Filters.eq("adminID", username)).first();
+                    // fallback: try ids
+                    user = db.retrieveUser(username);
                 }
-                if (user == null) {
+                if (user == null || user.getPasswordHash() == null || !user.getPasswordHash().equals(password)) {
                     sendJson(exchange, 401, "{\"error\":\"Invalid credentials\"}");
                     return;
                 }
 
-                String storedPassword = user.getString("passwordHash");
-                if (storedPassword == null) storedPassword = user.getString("password"); // fallback
-                if (storedPassword == null || !storedPassword.equals(password)) {
-                    sendJson(exchange, 401, "{\"error\":\"Invalid credentials\"}");
-                    return;
+                String role;
+                String id;
+                String firstName = null;
+                String lastName = null;
+                if (user instanceof BankTellerAccount) {
+                    role = "TELLER";
+                    id = ((BankTellerAccount) user).getBankTellerID();
+                    firstName = ((BankTellerAccount) user).getFirstName();
+                    lastName = ((BankTellerAccount) user).getLastName();
+                } else if (user instanceof DatabaseAdministratorAccount) {
+                    role = "ADMIN";
+                    id = ((DatabaseAdministratorAccount) user).getAdminID();
+                    firstName = ((DatabaseAdministratorAccount) user).getFirstname();
+                    lastName = ((DatabaseAdministratorAccount) user).getLastname();
+                } else {
+                    role = "CUSTOMER";
+                    UserAccount ua = (UserAccount) user;
+                    id = ua.getUserID();
+                    firstName = ua.getFirstName();
+                    lastName = ua.getLastName();
                 }
-
-                String role = resolveRole(user);
-                String id = resolveId(user, role);
-                String firstName = user.getString("firstName");
-                String lastName = user.getString("lastName");
                 String displayName = (firstName != null && lastName != null)
                         ? (firstName + " " + lastName)
-                        : (user.getString("name") != null ? user.getString("name") : username);
+                        : username;
 
                 Document response = new Document()
                         .append("name", displayName)
@@ -180,18 +196,6 @@ public class ApiServer {
                 e.printStackTrace();
                 sendJson(exchange, 500, "{\"error\":\"Login failed\"}");
             }
-        }
-
-        private String resolveRole(Document user) {
-            if (user.containsKey("bankTellerID")) return "TELLER";
-            if (user.containsKey("adminID")) return "ADMIN";
-            return "CUSTOMER";
-        }
-
-        private String resolveId(Document user, String role) {
-            if ("TELLER".equals(role)) return user.getString("bankTellerID");
-            if ("ADMIN".equals(role)) return user.getString("adminID");
-            return user.getString("userID");
         }
     }
 
@@ -220,12 +224,10 @@ public class ApiServer {
                 String name = params.get("name");
                 String type = params.get("type");
 
-                List<Document> accountDocs = new ArrayList<>();
-                db.getAccountCollection().find().into(accountDocs);
-
+                List<UserAccount> users = db.getAllAccounts();
                 List<Document> expanded = new ArrayList<>();
-                for (Document doc : accountDocs) {
-                    expanded.addAll(expandAccountDocuments(doc));
+                for (UserAccount ua : users) {
+                    expanded.addAll(expandUserAccount(ua));
                 }
 
                 List<Document> filtered = expanded.stream()
@@ -240,50 +242,31 @@ public class ApiServer {
             }
         }
 
-        // Expand a user document that contains an "accounts" array (Savings/Checking/Card) into separate rows
-        private List<Document> expandAccountDocuments(Document doc) {
+        private List<Document> expandUserAccount(UserAccount ua) {
             List<Document> results = new ArrayList<>();
-            String baseId = doc.getString("userID");
-            if (baseId == null) baseId = doc.getString("accountID");
-            String name = doc.getString("name");
-            if (name == null && doc.getString("firstName") != null && doc.getString("lastName") != null) {
-                name = doc.getString("firstName") + " " + doc.getString("lastName");
-            }
-            String branch = doc.getString("branch");
+            String baseId = ua.getUserID();
+            String name = ua.getFirstName() != null && ua.getLastName() != null
+                    ? ua.getFirstName() + " " + ua.getLastName()
+                    : ua.getUsername();
+            String branch = ua.getBranchID();
 
-            List<Document> subAccounts = doc.getList("accounts", Document.class);
-            int accountCounter = 1;
-            if (subAccounts != null && !subAccounts.isEmpty()) {
-                for (Document sub : subAccounts) {
-                    for (Entry<String, Object> entry : sub.entrySet()) {
-                        String type = entry.getKey();
-                        Double balance = 0.0;
-                        Object val = entry.getValue();
-                        if (val instanceof Number) {
-                            balance = ((Number) val).doubleValue();
-                        }
-                        Document row = new Document()
-                                .append("id", baseId + "-" + type) // unique per sub-account
-                                .append("customerId", baseId)
-                                .append("customerName", name)
-                                .append("branch", branch)
-                                .append("type", type)
-                                .append("balance", balance);
-                        results.add(row);
-                    }
+            List<Account> subAccounts = ua.getAccounts();
+            if (subAccounts != null) {
+                for (Account acc : subAccounts) {
+                    String type = acc.getAccountHeader();
+                    String friendlyType = "Checking";
+                    if ("SAV".equalsIgnoreCase(type)) friendlyType = "Savings";
+                    else if ("CRD".equalsIgnoreCase(type)) friendlyType = "Card";
+                    else if ("CHK".equalsIgnoreCase(type)) friendlyType = "Checking";
+                    Document row = new Document()
+                            .append("id", acc.getAccountID())
+                            .append("customerId", baseId)
+                            .append("customerName", name)
+                            .append("branch", branch)
+                            .append("type", friendlyType)
+                            .append("balance", acc.getBalance());
+                    results.add(row);
                 }
-            } else {
-                String type = doc.getString("accountType");
-                if (type == null) type = doc.getString("type");
-                Double balance = doc.getDouble("balance");
-                Document row = new Document()
-                        .append("id", baseId + "-" + (type != null ? type : "Checking"))
-                        .append("customerId", baseId)
-                        .append("customerName", name)
-                        .append("branch", branch)
-                        .append("type", type != null ? type : "Checking")
-                        .append("balance", balance != null ? balance : 0.0);
-                results.add(row);
             }
             return results;
         }
@@ -334,20 +317,16 @@ public class ApiServer {
                 Map<String, String> params = queryToMap(exchange.getRequestURI().getQuery());
                 String accountId = params.get("accountId");
 
-                List<Document> transactions = new ArrayList<>();
+                List<Transaction> txs;
                 if (accountId != null && !accountId.isBlank()) {
-                    db.getTransactionCollection().find(
-                            Filters.or(
-                                    Filters.eq("sourceAccountID", accountId),
-                                    Filters.eq("receiverAccountID", accountId)
-                            )
-                    ).into(transactions);
+                    txs = db.getTransactionHistory(accountId);
                 } else {
-                    db.getTransactionCollection().find().into(transactions);
+                    txs = db.getAllTransactions();
                 }
 
-                List<Document> projected = transactions.stream()
+                List<Document> projected = txs.stream()
                         .map(this::projectTransaction)
+                        .filter(tx -> matchesAccount(tx, accountId))
                         .collect(Collectors.toList());
 
                 String json = projected.stream().map(Document::toJson).collect(Collectors.joining(",", "[", "]"));
@@ -358,17 +337,24 @@ public class ApiServer {
             }
         }
 
-        private Document projectTransaction(Document doc) {
-            String id = doc.getString("transactionID");
-            Double amount = doc.getDouble("amount");
+        private Document projectTransaction(Transaction tx) {
+            String id = tx.getTransactionID();
+            Double amount = tx.getAmount();
             return new Document()
                     .append("id", id)
-                    .append("date", doc.getString("transactionDateTime"))
-                    .append("type", doc.getString("transactionType"))
+                    .append("date", tx.getTransactionDateTime() != null ? tx.getTransactionDateTime().toString() : null)
+                    .append("type", tx.getTransactionType())
                     .append("amount", amount != null ? amount : 0.0)
-                    .append("account", doc.getString("sourceAccountID"))
-                    .append("receiverAccountID", doc.getString("receiverAccountID"))
-                    .append("status", doc.getString("status"));
+                    .append("account", tx.getSourceAccountID())
+                    .append("receiverAccountID", tx.getReceiverAccountID())
+                    .append("status", tx.getStatus() != null ? tx.getStatus().toString() : null);
+        }
+
+        private boolean matchesAccount(Document tx, String accountId) {
+            if (accountId == null || accountId.isBlank()) return true;
+            String src = tx.getString("sourceAccountID");
+            String recv = tx.getString("receiverAccountID");
+            return (src != null && src.contains(accountId)) || (recv != null && recv.contains(accountId));
         }
     }
 
@@ -409,37 +395,36 @@ public class ApiServer {
                 String lastName = payload.getString("lastName");
                 String branch = payload.getString("branch");
                 String accountType = payload.getString("accountType");
-                Double initialDeposit = payload.getDouble("initialDeposit");
-                if (initialDeposit == null) initialDeposit = 0.0;
+                Number initNum = payload.get("initialDeposit", Number.class);
+                double initialDeposit = initNum != null ? initNum.doubleValue() : 0.0;
 
                 if (userId == null || username == null || password == null) {
                     sendJson(exchange, 400, "{\"error\":\"userID, username, and password are required\"}");
                     return;
                 }
 
-                Document existing = db.getAccountCollection().find(Filters.eq("userID", userId)).first();
-                if (existing != null) {
+                if (db.retrieveUserAccount(userId) != null) {
                     sendJson(exchange, 409, "{\"error\":\"Customer already exists\"}");
                     return;
                 }
 
-                Document newUser = new Document()
-                        .append("userID", userId)
-                        .append("username", username)
-                        .append("passwordHash", password)
-                        .append("firstName", firstName)
-                        .append("lastName", lastName)
-                        .append("branch", branch)
-                        .append("accountType", accountType != null ? accountType : "Checking")
-                        .append("balance", initialDeposit)
-                        .append("transactionHistory", new ArrayList<String>());
-
-                db.addAccount(newUser);
-                if (branch != null) {
-                    db.getBranchCollection().updateOne(Filters.eq("branchID", branch),
-                            new Document("$addToSet", new Document("accounts", userId)));
+                List<Account> accounts = new ArrayList<>();
+                String acctType = accountType != null ? accountType : "Checking";
+                String acctId = userId + "-" + acctType;
+                switch (acctType.toLowerCase()) {
+                    case "savings":
+                        accounts.add(new Savings(userId, acctId, initialDeposit, 0, 0));
+                        break;
+                    case "card":
+                        accounts.add(new Card(userId, acctId, initialDeposit, 0, 0, 0));
+                        break;
+                    default:
+                        accounts.add(new Checking(userId, acctId, initialDeposit, 0, 0, 0));
                 }
 
+                UserAccount newUser = new UserAccount(userId, username, firstName, lastName, password, branch, accounts);
+                newUser.setTransactionHistory(new ArrayList<>());
+                db.addAccount(newUser);
                 sendJson(exchange, 201, "{\"status\":\"created\"}");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -457,18 +442,13 @@ public class ApiServer {
                 }
                 String userId = parts[3];
 
-                Document existing = db.retrieveAccount(userId);
+                UserAccount existing = db.retrieveUserAccount(userId);
                 if (existing == null) {
                     sendJson(exchange, 404, "{\"error\":\"Customer not found\"}");
                     return;
                 }
 
-                String branch = existing.getString("branch");
-                db.removeAccount(userId);
-                if (branch != null) {
-                    db.getBranchCollection().updateOne(Filters.eq("branchID", branch),
-                            new Document("$pull", new Document("accounts", userId)));
-                }
+                db.removeUserAccount(userId);
 
                 sendJson(exchange, 200, "{\"status\":\"deleted\"}");
             } catch (Exception e) {
@@ -518,20 +498,12 @@ public class ApiServer {
                     return;
                 }
 
-                Document existing = db.retrieveTeller(tellerId);
-                if (existing != null) {
+                if (db.retrieveTeller(tellerId) != null) {
                     sendJson(exchange, 409, "{\"error\":\"Teller already exists\"}");
                     return;
                 }
 
-                Document teller = new Document()
-                        .append("bankTellerID", tellerId)
-                        .append("username", username)
-                        .append("passwordHash", password)
-                        .append("branchID", branch)
-                        .append("firstName", firstName)
-                        .append("lastName", lastName);
-
+                BankTellerAccount teller = new BankTellerAccount(tellerId, username, firstName, lastName, password, branch, db);
                 db.addTeller(teller);
                 sendJson(exchange, 201, "{\"status\":\"created\"}");
             } catch (Exception e) {
@@ -550,7 +522,7 @@ public class ApiServer {
                 }
                 String tellerId = parts[3];
 
-                Document existing = db.retrieveTeller(tellerId);
+                IUser existing = db.retrieveTeller(tellerId);
                 if (existing == null) {
                     sendJson(exchange, 404, "{\"error\":\"Teller not found\"}");
                     return;
@@ -596,112 +568,58 @@ public class ApiServer {
                     return;
                 }
 
-                // Parse sub-account identifiers (e.g., U001-Savings)
-                String fromId = null, fromSub = null;
-                if (from != null && !from.isBlank()) {
-                    String[] parts = from.split("-", 2);
-                    fromId = parts[0];
-                    fromSub = parts.length > 1 ? parts[1] : null;
-                }
-                String toId = null, toSub = null;
-                if (to != null && !to.isBlank()) {
-                    String[] parts = to.split("-", 2);
-                    toId = parts[0];
-                    toSub = parts.length > 1 ? parts[1] : null;
-                }
-
-                // Fetch account documents directly
-                Document fromDoc = (fromId != null && !fromId.isBlank())
-                        ? db.getAccountCollection().find(Filters.eq("userID", fromId)).first()
-                        : null;
-                Document toDoc = (toId != null && !toId.isBlank())
-                        ? db.getAccountCollection().find(Filters.eq("userID", toId)).first()
-                        : null;
-
-                if ("withdraw".equalsIgnoreCase(type) || "transfer".equalsIgnoreCase(type)) {
-                    if (fromDoc == null) {
-                        sendJson(exchange, 404, "{\"error\":\"Source account not found\"}");
-                        return;
-                    }
-                    double fromBal = getSubAccountBalance(fromDoc, fromSub);
-                    if (fromBal < amount) {
-                        sendJson(exchange, 400, "{\"error\":\"Insufficient funds\"}");
-                        return;
-                    }
-                    updateSubAccountBalance(fromDoc, fromId, fromSub, fromBal - amount);
-                }
-
-                if ("deposit".equalsIgnoreCase(type) || "transfer".equalsIgnoreCase(type)) {
-                    if (toDoc == null) {
-                        sendJson(exchange, 404, "{\"error\":\"Destination account not found\"}");
-                        return;
-                    }
-                    double toBal = getSubAccountBalance(toDoc, toSub);
-                    updateSubAccountBalance(toDoc, toId, toSub, toBal + amount);
-                }
-
                 String transactionId = payload.getString("transactionID");
                 if (transactionId == null) {
                     transactionId = "TX-" + System.currentTimeMillis();
                 }
-                Document tx = new Document()
-                        .append("transactionID", transactionId)
-                        .append("sourceAccountID", from)
-                        .append("receiverAccountID", to)
-                        .append("amount", amount)
-                        .append("transactionType", type)
-                        .append("transactionDateTime", payload.getString("transactionDateTime"))
-                        .append("status", "COMPLETED");
-                db.addTransaction(tx);
 
-                sendJson(exchange, 200, tx.toJson());
+                String fromUser = extractUserId(from);
+                String toUser = extractUserId(to);
+                Transaction tx;
+                switch (type.toLowerCase()) {
+                    case "deposit":
+                        tx = new Transaction(transactionId, toUser, to, toUser, to, amount, "DEPOSIT",
+                                java.time.LocalDateTime.now(), domain.enums.TransactionStatus.PENDING);
+                        break;
+                    case "withdraw":
+                        tx = new Transaction(transactionId, fromUser, from, fromUser, from, amount, "WITHDRAW",
+                                java.time.LocalDateTime.now(), domain.enums.TransactionStatus.PENDING);
+                        break;
+                    default:
+                        tx = new Transaction(transactionId, fromUser, from, toUser, to, amount, "TRANSFER",
+                                java.time.LocalDateTime.now(), domain.enums.TransactionStatus.PENDING);
+                }
+
+                if (!tx.execute()) {
+                    sendJson(exchange, 400, "{\"error\":\"Failed to process transaction\"}");
+                    return;
+                }
+
+                db.addTransaction(tx);
+                sendJson(exchange, 200, transactionToDoc(tx).toJson());
             } catch (Exception e) {
                 e.printStackTrace();
                     sendJson(exchange, 500, "{\"error\":\"Failed to process transaction\"}");
                 }
             }
 
-            private double getSubAccountBalance(Document doc, String subType) {
-                if (subType == null) {
-                    Number bal = doc.get("balance", Number.class);
-                    return bal != null ? bal.doubleValue() : 0.0;
-                }
-                List<Document> subs = doc.getList("accounts", Document.class);
-                if (subs != null) {
-                    for (Document sub : subs) {
-                        if (sub.containsKey(subType)) {
-                            Object val = sub.get(subType);
-                            if (val instanceof Number) {
-                                return ((Number) val).doubleValue();
-                            }
-                        }
-                    }
-                }
-                return 0.0;
-            }
+        private Document transactionToDoc(Transaction tx) {
+            return new Document()
+                    .append("transactionID", tx.getTransactionID())
+                    .append("sourceAccountID", tx.getSourceAccountID())
+                    .append("receiverAccountID", tx.getReceiverAccountID())
+                    .append("amount", tx.getAmount())
+                    .append("transactionType", tx.getTransactionType())
+                    .append("transactionDateTime",
+                            tx.getTransactionDateTime() != null ? tx.getTransactionDateTime().toString() : null)
+                    .append("status", tx.getStatus() != null ? tx.getStatus().toString() : null);
+        }
 
-            private void updateSubAccountBalance(Document doc, String baseId, String subType, double newBalance) {
-                if (subType == null) {
-                    db.updateAccount(baseId, new Document("balance", newBalance));
-                    return;
-                }
-                List<Document> subs = doc.getList("accounts", Document.class);
-                if (subs == null) subs = new ArrayList<>();
-                boolean updated = false;
-                for (Document sub : subs) {
-                    if (sub.containsKey(subType)) {
-                        sub.put(subType, newBalance);
-                        updated = true;
-                        break;
-                    }
-                }
-                if (!updated) {
-                    Document newSub = new Document().append(subType, newBalance);
-                    subs.add(newSub);
-                }
-                db.getAccountCollection().updateOne(Filters.eq("userID", baseId),
-                        new Document("$set", new Document("accounts", subs)));
-            }
+        private String extractUserId(String accountId) {
+            if (accountId == null) return null;
+            int idx = accountId.indexOf("-");
+            return idx > 0 ? accountId.substring(0, idx) : accountId;
+        }
         }
 
     private static class AccountMaintenanceHandler implements HttpHandler {
@@ -734,19 +652,14 @@ public class ApiServer {
                     return;
                 }
 
-                Document existing = db.retrieveAccount(userId);
+                UserAccount existing = db.retrieveUserAccount(userId);
                 if (existing == null) {
                     sendJson(exchange, 404, "{\"error\":\"Customer not found\"}");
                     return;
                 }
 
                 if ("close".equalsIgnoreCase(action)) {
-                    db.removeAccount(userId);
-                    String branch = existing.getString("branch");
-                    if (branch != null) {
-                        db.getBranchCollection().updateOne(Filters.eq("branchID", branch),
-                                new Document("$pull", new Document("accounts", userId)));
-                    }
+                    db.removeUserAccount(userId);
                     sendJson(exchange, 200, "{\"status\":\"account closed\"}");
                     return;
                 }
@@ -763,6 +676,51 @@ public class ApiServer {
             } catch (Exception e) {
                 e.printStackTrace();
                 sendJson(exchange, 500, "{\"error\":\"Failed to manage account\"}");
+            }
+        }
+    }
+
+    private static class UsersHandler implements HttpHandler {
+        private final Database db;
+
+        UsersHandler(Database db) {
+            this.db = db;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                handleOptions(exchange);
+                return;
+            }
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendJson(exchange, 405, "{\"error\":\"Method not allowed\"}");
+                return;
+            }
+            try {
+                String path = exchange.getRequestURI().getPath(); // /api/users/{userId}
+                String[] parts = path.split("/");
+                if (parts.length < 4) {
+                    sendJson(exchange, 400, "{\"error\":\"Missing userID\"}");
+                    return;
+                }
+                String userId = parts[3];
+                UserAccount user = db.retrieveUserAccount(userId);
+                if (user == null) {
+                    sendJson(exchange, 404, "{\"error\":\"User not found\"}");
+                    return;
+                }
+                Document doc = new Document()
+                        .append("userID", user.getUserID())
+                        .append("username", user.getUsername())
+                        .append("firstName", user.getFirstName())
+                        .append("lastName", user.getLastName())
+                        .append("branch", user.getBranchID())
+                        .append("transactionHistory", user.getTransactionHistory());
+                sendJson(exchange, 200, doc.toJson());
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendJson(exchange, 500, "{\"error\":\"Failed to fetch user\"}");
             }
         }
     }

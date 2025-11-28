@@ -5,9 +5,13 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
+import domain.accounts.Card;
+import domain.accounts.Checking;
+import domain.accounts.Savings;
 import domain.bank.Bank;
 import domain.bank.Branch;
 import domain.transactions.Transaction;
+import domain.users.Account;
 import domain.users.BankTellerAccount;
 import domain.users.DatabaseAdministratorAccount;
 import domain.users.IUser;
@@ -16,7 +20,9 @@ import domain.users.UserAccount;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Database {
     private static Database instance;
@@ -79,6 +85,26 @@ public class Database {
             System.out.println("MongoDB connection closed.");
         }
     }
+
+    public MongoCollection<Document> getAccountCollection() {
+        return accountCollection;
+    }
+
+    public MongoCollection<Document> getTellerCollection() {
+        return tellerCollection;
+    }
+
+    public MongoCollection<Document> getAdminCollection() {
+        return adminCollection;
+    }
+
+    public MongoCollection<Document> getTransactionCollection() {
+        return transactionCollection;
+    }
+
+    public MongoCollection<Document> getBranchCollection() {
+        return branchCollection;
+    }
     
     // ----User Account Operations----
     public void addAccount(UserAccount account) {
@@ -91,7 +117,7 @@ public class Database {
         accountCollection.insertOne(accountDoc);
     }
     
-    public UserAccount retrieveAccount(String accountID) {
+    public UserAccount retrieveUserAccount(String accountID) {
         Document doc = accountCollection.find(Filters.eq("userID", accountID)).first();
         if (doc != null) {
             return documentToUserAccount(doc, UserAccount.class);
@@ -99,7 +125,7 @@ public class Database {
         return null;
     }
     
-    public void updateAccount(String accountID, UserAccount updatedAccount) {
+    public void updateUserAccount(String accountID, UserAccount updatedAccount) {
         Document updates = userAccountToDocument(updatedAccount);
         accountCollection.updateOne(Filters.eq("userID", accountID), new Document("$set", updates));
     }
@@ -109,7 +135,7 @@ public class Database {
         accountCollection.updateOne(Filters.eq("userID", accountID), new Document("$set", updates));
     }
     
-    public void removeAccount(String accountID) {
+    public void removeUserAccount(String accountID) {
         accountCollection.deleteOne(Filters.eq("userID", accountID));
     }
     
@@ -125,14 +151,25 @@ public class Database {
         
         return accounts;
     }
+
+    public Account retrieveAccountByAccountID(String accountID) {
+        for (UserAccount user : getAllAccounts()) {
+            for (Account acc : user.getAccounts()) {
+                if (acc.getAccountID().equals(accountID)) {
+                    return acc;
+                }
+            }
+        }
+        return null;
+    }
     
     // ----BankTellerAccount Operations----
-    public void addBankTeller(BankTellerAccount teller) {
+    public void addTeller(BankTellerAccount teller) {
         Document tellerDoc = tellerAccountToDocument(teller);
         tellerCollection.insertOne(tellerDoc);
     }
     
-    public BankTellerAccount retrieveBankTeller(String tellerID) {
+    public BankTellerAccount retrieveTeller(String tellerID) {
         Document doc = tellerCollection.find(Filters.eq("bankTellerID", tellerID)).first();
         if (doc != null) {
             return documentToBankTellerAccount(doc, BankTellerAccount.class);
@@ -140,16 +177,16 @@ public class Database {
         return null;
     }
     
-    public void updateBankTeller(String tellerID, BankTellerAccount updatedTeller) {
+    public void updateTeller(String tellerID, BankTellerAccount updatedTeller) {
         Document updates = tellerAccountToDocument(updatedTeller);
         tellerCollection.updateOne(Filters.eq("bankTellerID", tellerID), new Document("$set", updates));
     }
     
-    public void removeBankTeller(String tellerID) {
+    public void removeTeller(String tellerID) {
         tellerCollection.deleteOne(Filters.eq("bankTellerID", tellerID));
     }
     
-    public ArrayList<BankTellerAccount> getAllBankTellers() {
+    public ArrayList<BankTellerAccount> getAllTellers() {
         ArrayList<BankTellerAccount> tellers = new ArrayList<>();
         ArrayList<Document> tellerDocs = new ArrayList<>();
         tellerCollection.find().into(tellerDocs);
@@ -202,11 +239,29 @@ public class Database {
     public void addTransaction(Transaction transaction) {
         Document transactionDoc = transactionToDocument(transaction);
         transactionCollection.insertOne(transactionDoc);
+        // Update histories for both source and receiver users if present
+        if (transaction.getSourceUserID() != null) {
+            updateUserTransactionHistory(transaction.getSourceUserID(), transaction.getTransactionID());
+        }
+        if (transaction.getReceiverUserID() != null && !transaction.getReceiverUserID().equals(transaction.getSourceUserID())) {
+            updateUserTransactionHistory(transaction.getReceiverUserID(), transaction.getTransactionID());
+        }
     }
 
     // Overload to insert a raw transaction document (used by API server)
     public void addTransaction(Document transactionDoc) {
         transactionCollection.insertOne(transactionDoc);
+        String txId = transactionDoc.getString("transactionID");
+        String srcUser = transactionDoc.getString("sourceUserID");
+        String recvUser = transactionDoc.getString("receiverUserID");
+        if (srcUser != null) updateUserTransactionHistory(srcUser, txId);
+        if (recvUser != null && !recvUser.equals(srcUser)) updateUserTransactionHistory(recvUser, txId);
+    }
+
+    private void updateUserTransactionHistory(String userID, String transactionID) {
+        accountCollection.updateOne(
+                Filters.eq("userID", userID),
+                new Document("$addToSet", new Document("transactionHistory", transactionID)));
     }
     
     public Transaction retrieveTransaction(String transactionID) {
@@ -221,17 +276,16 @@ public class Database {
         ArrayList<Transaction> transactions = new ArrayList<>();
         ArrayList<Document> transactionDocs = new ArrayList<>();
         transactionCollection.find(
-            Filters.or(
-                Filters.eq("sourceAccountID", accountID),
-                Filters.eq("receiverAccountID", accountID)
-            )
-        ).into(transactionDocs);
-        
+                Filters.or(
+                        Filters.eq("sourceAccountID", accountID),
+                        Filters.eq("receiverAccountID", accountID)))
+                .into(transactionDocs);
+
         for (Document doc : transactionDocs) {
             Transaction transaction = documentToTransaction(doc, Transaction.class);
             transactions.add(transaction);
         }
-        
+
         return transactions;
     }
     
@@ -335,25 +389,7 @@ public class Database {
         return user;
     }
 
-    public MongoCollection<Document> getAccountCollection() {
-        return accountCollection;
-    }
-
-    public MongoCollection<Document> getTellerCollection() {
-        return tellerCollection;
-    }
-
-    public MongoCollection<Document> getAdminCollection() {
-        return adminCollection;
-    }
-
-    public MongoCollection<Document> getBranchCollection() {
-        return branchCollection;
-    }
-
-    public MongoCollection<Document> getTransactionCollection() {
-        return transactionCollection;
-    }
+  
     
     // ----SEARCH METHODS----
     // This is for database administrators since you can search for banktellers as well
@@ -406,6 +442,28 @@ public class Database {
         return null;
     }
 
+    public IUser retrieveUserByUsername(String username) {
+        // Check UserAccount
+        Document doc = accountCollection.find(Filters.eq("username", username)).first();
+        if (doc != null) {
+            return documentToUserAccount(doc, UserAccount.class);
+        }
+        
+        // Check BankTellerAccount
+        doc = tellerCollection.find(Filters.eq("username", username)).first();
+        if (doc != null) {
+            return documentToBankTellerAccount(doc, BankTellerAccount.class);
+        }
+        
+        // Check DatabaseAdministratorAccount
+        doc = adminCollection.find(Filters.eq("username", username)).first();  // ✅ Now correct
+        if (doc != null) {
+            return documentToAdminAccount(doc, DatabaseAdministratorAccount.class);
+        }
+        
+        return null;
+    }
+
     // For login and database admins to get any user (UserAccount, BankTellerAccount, DatabaseAdminAccount)
     public IUser retrieveUser(String id) {
         // For UserAccount 
@@ -434,16 +492,52 @@ public class Database {
     // ----CLASS TO DOCUMENT METHODS----
     public Document userAccountToDocument(Object userAccount) {
         try {
+            Object accountsObj = getField(userAccount, "accounts");
+            List<Document> accountDocs = accountsToDocumentList(accountsObj);
+            Object history = getField(userAccount, "transactionHistory");
             return new Document()
-                .append("userID", getField(userAccount, "userID"))
-                .append("name", getField(userAccount, "name"))
-                .append("passwordHash", getField(userAccount, "passwordHash"))
-                .append("balance", getField(userAccount, "balance"))
-                .append("branch", getField(userAccount, "branch"))
-                .append("transactionHistory", getField(userAccount, "transactionHistory"));
+                    .append("userID", getField(userAccount, "userID"))
+                    .append("passwordHash", getField(userAccount, "passwordHash"))
+                    .append("branch", getField(userAccount, "branchId"))
+                    .append("transactionHistory", history != null ? history : new ArrayList<String>())
+                    .append("firstName", getField(userAccount, "firstName"))
+                    .append("lastName", getField(userAccount, "lastName"))
+                    .append("username", getField(userAccount, "username"))
+                    .append("accounts", accountDocs);
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert UserAccount to Document", e);
         }
+    }
+
+    // Helper method to convert various account representations to List<Document>
+    private List<Document> accountsToDocumentList(Object accountsObj) {
+        List<Document> accountDocs = new ArrayList<>();
+        if (accountsObj == null) return accountDocs;
+
+        if (accountsObj instanceof Account[]) {
+            for (Account account : (Account[]) accountsObj) {
+                accountDocs.add(new Document()
+                        .append("accountID", account.getAccountID())
+                        .append("accountHeader", account.getAccountHeader())
+                        .append("balance", account.getBalance()));
+            }
+        } else if (accountsObj instanceof List) {
+            // already a list of documents or maps
+            for (Object o : (List<?>) accountsObj) {
+                if (o instanceof Document) {
+                    accountDocs.add((Document) o);
+                } else if (o instanceof Map) {
+                    accountDocs.add(new Document((Map<String, Object>) o));
+                } else if (o instanceof Account) {
+                    Account account = (Account) o;
+                    accountDocs.add(new Document()
+                            .append("accountID", account.getAccountID())
+                            .append("accountHeader", account.getAccountHeader())
+                            .append("balance", account.getBalance()));
+                }
+            }
+        }
+        return accountDocs;
     }
     
     public Document tellerAccountToDocument(Object teller) {
@@ -451,7 +545,10 @@ public class Database {
             return new Document()
                 .append("bankTellerID", getField(teller, "bankTellerID"))
                 .append("username", getField(teller, "username"))
-                .append("passwordHash", getField(teller, "passwordHash"));
+                .append("passwordHash", getField(teller, "passwordHash"))
+                .append("firstname", getField(teller, "firstname"))  // lowercase to match field
+                .append("lastname", getField(teller, "lastname"))    // lowercase to match field
+                .append("branchID", getField(teller, "branchID"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert BankTellerAccount to Document", e);
         }
@@ -462,7 +559,9 @@ public class Database {
             return new Document()
                 .append("adminID", getField(admin, "adminID"))
                 .append("username", getField(admin, "username"))
-                .append("passwordHash", getField(admin, "passwordHash"));
+                .append("passwordHash", getField(admin, "passwordHash"))
+                .append("firstname", getField(admin, "firstname"))  // lowercase to match field
+                .append("lastname", getField(admin, "lastname"));    // lowercase to match field
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert DatabaseAdministratorAccount to Document", e);
         }
@@ -493,14 +592,19 @@ public class Database {
     
     public Document transactionToDocument(Object transaction) {
         try {
+            Object dtObj = getField(transaction, "transactionDateTime");
+            String dt = dtObj != null ? dtObj.toString() : null;
+            Object statusObj = getField(transaction, "status");
             return new Document()
-                .append("transactionID", getField(transaction, "transactionID"))
-                .append("sourceAccountID", getField(transaction, "sourceAccountID"))
-                .append("receiverAccountID", getField(transaction, "receiverAccountID"))
-                .append("amount", getField(transaction, "amount"))
-                .append("transactionType", getField(transaction, "transactionType"))
-                .append("transactionDateTime", getField(transaction, "transactionDateTime"))
-                .append("status", getField(transaction, "status"));
+                    .append("transactionID", getField(transaction, "transactionID"))
+                    .append("sourceUserID", getField(transaction, "sourceUserID"))
+                    .append("sourceAccountID", getField(transaction, "sourceAccountID"))
+                    .append("receiverUserID", getField(transaction, "receiverUserID"))
+                    .append("receiverAccountID", getField(transaction, "receiverAccountID"))
+                    .append("amount", getField(transaction, "amount"))
+                    .append("transactionType", getField(transaction, "transactionType"))
+                    .append("transactionDateTime", dt)
+                    .append("status", statusObj != null ? statusObj.toString() : null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Transaction to Document", e);
         }
@@ -556,20 +660,89 @@ public class Database {
         try {
             T userAccount = userAccountClass.getDeclaredConstructor().newInstance();
             setField(userAccount, "userID", doc.getString("userID"));
-            setField(userAccount, "name", doc.getString("name"));
             setField(userAccount, "passwordHash", doc.getString("passwordHash"));
-            setField(userAccount, "balance", doc.getDouble("balance"));
-            setField(userAccount, "branch", doc.getString("branch"));
-            
+            setField(userAccount, "branchId", doc.getString("branch"));
+            // tolerate both first_name/last_name and firstName/lastName
+            String fn = doc.getString("firstName");
+            if (fn == null) fn = doc.getString("first_name");
+            String ln = doc.getString("lastName");
+            if (ln == null) ln = doc.getString("last_name");
+            setField(userAccount, "firstName", fn);
+            setField(userAccount, "lastName", ln);
+            setField(userAccount, "username", doc.getString("username"));
+
             List<String> transactionHistory = (List<String>) doc.get("transactionHistory");
             if (transactionHistory != null) {
                 setField(userAccount, "transactionHistory", transactionHistory);
             }
-            
+
+            List<Account> accountList = documentToAccountsFlexible(doc);
+            setField(userAccount, "accounts", accountList);
+
             return userAccount;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to UserAccount", e);
         }
+    }
+
+    // Convert account data from either legacy shape ({Savings:1000}) or new shape (with accountID/accountHeader)
+    private List<Account> documentToAccountsFlexible(Document userDoc) {
+        List<Account> accounts = new ArrayList<>();
+        List<Document> accountDocs = (List<Document>) userDoc.get("accounts");
+        String baseId = userDoc.getString("userID");
+        if (accountDocs != null) {
+            for (Document d : accountDocs) {
+                // Skip stray balance-only docs that aren't real accounts
+                if (d.keySet().size() == 1 && d.containsKey("balance")) {
+                    continue;
+                }
+                // Legacy shape: one key per doc like Savings/Checking/Card
+                if (d.containsKey("accountID") || d.containsKey("accountHeader")) {
+                    accounts.add(documentToAccountNew(d));
+                } else {
+                    accounts.addAll(documentToAccountLegacy(d, baseId));
+                }
+            }
+        }
+        return accounts;
+    }
+
+    private Account documentToAccountNew(Document doc) {
+        String header = doc.getString("accountHeader");
+        String id = doc.getString("accountID");
+        Number bal = doc.get("balance", Number.class);
+        double balance = bal != null ? bal.doubleValue() : 0.0;
+        if ("SAV".equalsIgnoreCase(header)) return new Savings(doc.getString("userID"), id, balance, 0, 0);
+        if ("CHK".equalsIgnoreCase(header)) return new Checking(doc.getString("userID"), id, balance, 0, 0, 0);
+        if ("CRD".equalsIgnoreCase(header)) return new Card(doc.getString("userID"), id, balance, 0, 0, 0);
+        // default to Checking
+        return new Checking(doc.getString("userID"), id, balance, 0, 0, 0);
+    }
+
+    // Legacy doc has a single entry like {Savings: 1000}
+    private List<Account> documentToAccountLegacy(Document doc, String baseId) {
+        List<Account> result = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : doc.entrySet()) {
+            String key = entry.getKey();
+            Object val = entry.getValue();
+            double balance = (val instanceof Number) ? ((Number) val).doubleValue() : 0.0;
+            String accountId = baseId + "-" + key;
+            switch (key.toLowerCase()) {
+                case "savings":
+                    result.add(new Savings(baseId, accountId, balance, 0, 0));
+                    break;
+                case "checking":
+                    result.add(new Checking(baseId, accountId, balance, 0, 0, 0));
+                    break;
+                case "card":
+                    result.add(new Card(baseId, accountId, balance, 0, 0, 0));
+                    break;
+                default:
+                    // ignore unknown keys such as legacy "balance"
+                    break;
+            }
+        }
+        return result;
     }
 
     // Document to BankTellerAccount
@@ -579,6 +752,9 @@ public class Database {
             setField(teller, "bankTellerID", doc.getString("bankTellerID"));
             setField(teller, "username", doc.getString("username"));
             setField(teller, "passwordHash", doc.getString("passwordHash"));
+            setField(teller, "firstname", doc.getString("firstname"));  // lowercase to match field
+            setField(teller, "lastname", doc.getString("lastname"));    // lowercase to match field
+            setField(teller, "branchID", doc.getString("branchID"));
             return teller;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to BankTellerAccount", e);
@@ -592,6 +768,8 @@ public class Database {
             setField(admin, "adminID", doc.getString("adminID"));
             setField(admin, "username", doc.getString("username"));
             setField(admin, "passwordHash", doc.getString("passwordHash"));
+            setField(admin, "firstname", doc.getString("firstname"));  // lowercase to match field
+            setField(admin, "lastname", doc.getString("lastname"));    // lowercase to match field
             return admin;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to DatabaseAdministratorAccount", e);
@@ -641,11 +819,33 @@ public class Database {
             T transaction = transactionClass.getDeclaredConstructor().newInstance();
             setField(transaction, "transactionID", doc.getString("transactionID"));
             setField(transaction, "sourceAccountID", doc.getString("sourceAccountID"));
+            setField(transaction, "sourceUserID", doc.getString("sourceUserID"));
             setField(transaction, "receiverAccountID", doc.getString("receiverAccountID"));
-            setField(transaction, "amount", doc.getDouble("amount"));
+            setField(transaction, "receiverUserID", doc.getString("receiverUserID"));
+            Number amt = doc.get("amount", Number.class);
+            setField(transaction, "amount", amt != null ? amt.doubleValue() : 0.0);
             setField(transaction, "transactionType", doc.getString("transactionType"));
-            setField(transaction, "transactionDateTime", doc.getString("transactionDateTime"));
-            setField(transaction, "status", doc.getString("status"));
+            String dt = doc.getString("transactionDateTime");
+            if (dt != null && !dt.isBlank()) {
+                try {
+                    if (dt.contains("T")) {
+                        setField(transaction, "transactionDateTime", java.time.LocalDateTime.parse(dt));
+                    } else {
+                        setField(transaction, "transactionDateTime",
+                                java.time.LocalDate.parse(dt).atStartOfDay());
+                    }
+                } catch (Exception ignored) {
+                    // leave null if parsing fails
+                }
+            }
+            String status = doc.getString("status");
+            if (status != null) {
+                try {
+                    setField(transaction, "status", domain.enums.TransactionStatus.valueOf(status));
+                } catch (Exception ignored) {
+                    // leave null if unknown
+                }
+            }
             return transaction;
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert Document to Transaction", e);

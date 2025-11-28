@@ -148,6 +148,7 @@ function TabButtons({ tabs, current, onChange }) {
 
 function CreateCustomerForm() {
   const [form, setForm] = useState({
+    userID: "",
     firstName: "",
     lastName: "",
     username: "",
@@ -173,7 +174,7 @@ function CreateCustomerForm() {
     setLoading(true);
     try {
       await createCustomer({
-        userID: form.username ? form.username.toUpperCase() : undefined,
+        userID: form.userID,
         username: form.username,
         password: form.password,
         firstName: form.firstName,
@@ -190,6 +191,7 @@ function CreateCustomerForm() {
         lastName: "",
         username: "",
         password: "",
+        userID: "",
         email: "",
         phone: "",
         branch: "",
@@ -205,6 +207,15 @@ function CreateCustomerForm() {
 
   return (
     <form className="grid-2" onSubmit={onSubmit}>
+      <div className="field">
+        <span>User ID</span>
+        <input
+          value={form.userID}
+          onChange={(e) => onChange("userID", e.target.value)}
+          placeholder="e.g. U004"
+          required
+        />
+      </div>
       <div className="field">
         <span>First name</span>
         <input

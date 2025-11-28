@@ -8,15 +8,8 @@ import TransferForm from "../components/TransferForm.jsx";
 export default function CustomerDashboard({ user, accounts, transactions, onRefresh }) {
   const [tab, setTab] = useState("overview"); // overview | accounts | transfer
   const displayName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.name;
-  const filteredTransactions = useMemo(() => {
-    if (!user?.id) return transactions || [];
-    return (transactions || []).filter(
-      (tx) => tx.account === user.id || tx.receiverAccountID === user.id
-    );
-  }, [transactions, user]);
+    user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.name;
+  const filteredTransactions = useMemo(() => transactions || [], [transactions]);
 
   return (
     <section>

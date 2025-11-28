@@ -1,16 +1,20 @@
 package domain.accounts;
 
+import domain.bank.Branch;
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
+import domain.users.Account;
 import domain.users.UserAccount;
 
-public class Checking extends UserAccount {
+public class Checking extends Account {
 
     private double overdraftLimit; // maximum allowed negative balance
     private double minBalance; // enforced minimum balance on the account
     private double monthlyFee; // monthly maintenance fee
 
-    public Checking(String userID, String name, String email, String passwordHash, double balance, domain.bank.Branch branch,
-            double overdraftLimit, double minBalance, double monthlyFee) {
-        super(userID, name, email, passwordHash, balance, branch);
+    public Checking(String userID, String accountID, double balance, double overdraftLimit,
+            double minBalance, double monthlyFee) {
+        super(userID, accountID, "CHK", balance);
         this.overdraftLimit = overdraftLimit;
         this.minBalance = minBalance;
         this.monthlyFee = monthlyFee;
@@ -28,7 +32,17 @@ public class Checking extends UserAccount {
                 || super.getBalance() - amount < this.minBalance) {
             return;
         }
-        super.withdraw(amount);
+        Transaction withdrawTransaction = new Transaction(
+                "TXN_" + super.accountHeader + "_W" + System.currentTimeMillis(),
+                super.getUserID(),
+                super.getAccountID(),
+                null,
+                null,
+                amount,
+                "WITHDRAW",
+                java.time.LocalDateTime.now(),
+                TransactionStatus.PENDING);
+        withdrawTransaction.execute();
     }
 
     /**

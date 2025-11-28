@@ -5,17 +5,24 @@ import java.util.List;
 
 import database.Database;
 import domain.enums.TransactionStatus;
+import domain.users.Account;
 import domain.users.UserAccount;
 
 public class Transaction {
 
     private String transactionID;
+    private String sourceUserID;
     private String sourceAccountID;
+  
     private String receiverAccountID;
+    private String receiverUserID;
     private double amount;
     private String transactionType;
     private LocalDateTime transactionDateTime;
     private TransactionStatus status;
+
+    // No-arg constructor for reflection/deserialization
+    public Transaction() {}
 
     /**
      * @param transactionID
@@ -26,10 +33,13 @@ public class Transaction {
      * @param transactionDateTime
      * @param status
      */
-    public Transaction(String transactionID, String sourceAccountID, String receiverAccountID,
+    public Transaction(String transactionID, String sourceUserID, String sourceAccountID, String receiverUserID,
+            String receiverAccountID,
             double amount, String transactionType, LocalDateTime transactionDateTime, TransactionStatus status) {
         this.transactionID = transactionID;
+        this.sourceUserID = sourceUserID;
         this.sourceAccountID = sourceAccountID;
+        this.receiverUserID = receiverUserID;
         this.receiverAccountID = receiverAccountID;
         this.amount = amount;
         this.transactionType = transactionType;
@@ -55,10 +65,14 @@ public class Transaction {
      * @param accountID
      * @return
      */
-    public static List<Transaction> getTransactionHistory(String accountID) {
+    public static List<Transaction> getTransactionHistory(String userID, String accountID) {
         Database db = Database.getInstance();
-        UserAccount user = (UserAccount) db.retrieveAccount(accountID);
-        return user.getTransactionHistory();
+        UserAccount user = (UserAccount) db.retrieveUserAccount(accountID);
+        Account account = user.getAccounts().stream()
+                .filter(acc -> acc.getAccountID().equals(accountID))
+                .findFirst()
+                .orElse(null);
+        return account.getTransactions();
     }
 
     /*-------------------- Instance methods --------------------*/
@@ -73,29 +87,46 @@ public class Transaction {
             return false;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
-        switch (transactionType) {
+        UserAccount sourceUser = findUserByAccountId(this.sourceAccountID);
+        Account sourceAccount = findAccountById(sourceUser, this.sourceAccountID);
+        if (sourceAccount == null) {
+            this.status = TransactionStatus.FAILED;
+            return false;
+        }
+        switch (transactionType != null ? transactionType.toUpperCase() : "") {
             case "DEPOSIT":
-                sourceUser.setBalance(sourceUser.getBalance() + this.amount);
+                sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
                 this.status = TransactionStatus.COMPLETED;
-                sourceUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
+                sourceAccount.getTransactions().add(this);
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "WITHDRAW":
-                sourceUser.setBalance(sourceUser.getBalance() - this.amount);
+                sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
                 this.status = TransactionStatus.COMPLETED;
-                sourceUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
+                sourceAccount.getTransactions().add(this);
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
-                sourceUser.setBalance(sourceUser.getBalance() - this.amount);
-                receiverUser.setBalance(receiverUser.getBalance() + this.amount);
+                boolean sameUser = sourceUser != null && this.receiverAccountID != null
+                        && this.receiverAccountID.startsWith(sourceUser.getUserID());
+                UserAccount receiverUser = sameUser ? sourceUser : findUserByAccountId(this.receiverAccountID);
+                Account receiverAccount = findAccountById(receiverUser, this.receiverAccountID);
+                if (receiverAccount == null) {
+                    this.status = TransactionStatus.FAILED;
+                    return false;
+                }
+                sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
+                receiverAccount.setBalance(receiverAccount.getBalance() + this.amount);
                 this.status = TransactionStatus.COMPLETED;
-                sourceUser.getTransactionHistory().add(this);
-                receiverUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
-                db.updateAccount(this.receiverAccountID, receiverUser);
+                sourceAccount.getTransactions().add(this);
+                receiverAccount.getTransactions().add(this);
+                // If same user, update once; otherwise update both users
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                if (!sameUser && receiverUser != null) {
+                    db.updateUserAccount(receiverUser.getUserID(), receiverUser);
+                }
                 return true;
             default:
                 this.status = TransactionStatus.FAILED;
@@ -109,17 +140,21 @@ public class Transaction {
      * @return
      */
     public boolean validateTransaction() {
-        Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
-        switch (transactionType) {
+        UserAccount sourceUser = findUserByAccountId(this.sourceAccountID);
+        Account sourceAccount = findAccountById(sourceUser, this.sourceAccountID);
+        switch (transactionType != null ? transactionType.toUpperCase() : "") {
+            case "DEPOSIT":
+                return sourceAccount != null;
             case "WITHDRAW":
-                return sourceUser.getBalance() >= this.amount;
+                return sourceAccount != null && sourceAccount.getBalance() >= this.amount;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
-                if (receiverUser == null) {
+                if (sourceAccount == null) return false;
+                UserAccount receiverUser = findUserByAccountId(this.receiverAccountID);
+                Account receiverAccount = findAccountById(receiverUser, this.receiverAccountID);
+                if (receiverAccount == null) {
                     return false;
                 }
-                return sourceUser.getBalance() >= this.amount;
+                return sourceAccount.getBalance() >= this.amount;
             default:
                 return false;
         }
@@ -130,48 +165,60 @@ public class Transaction {
      * Essentially performs the opposite operation of execute()
      * 
      */
-    public void reverseTransaction() {
+    public boolean reverseTransaction() {
         if (!this.validateTransaction()) {
             this.status = TransactionStatus.FAILED;
+            return false;
         }
         Database db = Database.getInstance();
-        UserAccount sourceUser = (UserAccount) db.retrieveAccount(this.sourceAccountID);
+        UserAccount sourceUser = findUserByAccountId(this.sourceAccountID);
+        Account sourceAccount = findAccountById(sourceUser, this.sourceAccountID);
+        if (sourceAccount == null) {
+            this.status = TransactionStatus.FAILED;
+            return false;
+        }
         switch (transactionType) {
             case "DEPOSIT":
-                sourceUser.setBalance(sourceUser.getBalance() - this.amount);
-                this.status = TransactionStatus.REVERSED;
-                sourceUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
+                sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
+                this.status = TransactionStatus.COMPLETED;
+                sourceAccount.getTransactions().add(this);
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                // db.updateAccount(this.sourceAccountID, sourceUser);
+                return true;
             case "WITHDRAW":
-                sourceUser.setBalance(sourceUser.getBalance() + this.amount);
-                this.status = TransactionStatus.REVERSED;
-                sourceUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
+                sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
+                this.status = TransactionStatus.COMPLETED;
+                sourceAccount.getTransactions().add(this);
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                // db.updateAccount(this.sourceAccountID, sourceUser);
+                return true;
             case "TRANSFER":
-                UserAccount receiverUser = (UserAccount) db.retrieveAccount(this.receiverAccountID);
-                sourceUser.setBalance(sourceUser.getBalance() + this.amount);
-                receiverUser.setBalance(receiverUser.getBalance() - this.amount);
-                this.status = TransactionStatus.REVERSED;
-                sourceUser.getTransactionHistory().add(this);
-                receiverUser.getTransactionHistory().add(this);
-                db.updateAccount(this.sourceAccountID, sourceUser);
-                db.updateAccount(this.receiverAccountID, receiverUser);
+                UserAccount receiverUser = findUserByAccountId(this.receiverAccountID);
+                Account receiverAccount = findAccountById(receiverUser, this.receiverAccountID);
+                if (receiverAccount == null) {
+                    this.status = TransactionStatus.FAILED;
+                    return false;
+                }
+                sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
+                receiverAccount.setBalance(receiverAccount.getBalance() - this.amount);
+                this.status = TransactionStatus.COMPLETED;
+                sourceAccount.getTransactions().add(this);
+                receiverAccount.getTransactions().add(this);
+                db.updateUserAccount(sourceUser.getUserID(), sourceUser);
+                db.updateUserAccount(receiverUser.getUserID(), receiverUser);
+                // db.updateAccount(this.sourceAccountID, sourceUser);
+                // db.updateAccount(this.receiverAccountID, receiverUser);
+                return true;
             default:
                 this.status = TransactionStatus.FAILED;
+                return false;
         }
     }
 
     /*-------------------- Getters and Setters --------------------*/
+
     public String getTransactionID() {
         return transactionID;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
     }
 
     public TransactionStatus getStatus() {
@@ -188,5 +235,41 @@ public class Transaction {
 
     public LocalDateTime getTransactionDateTime() {
         return transactionDateTime;
+    }
+
+    public String getSourceUserID() {
+        return sourceUserID;
+    }
+
+    public String getSourceAccountID() {
+        return sourceAccountID;
+    }
+
+    public String getReceiverUserID() {
+        return receiverUserID;
+    }
+
+    public String getReceiverAccountID() {
+        return receiverAccountID;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    private UserAccount findUserByAccountId(String accountId) {
+        if (accountId == null) return null;
+        String userId = accountId.contains("-") ? accountId.substring(0, accountId.indexOf("-")) : accountId;
+        Database db = Database.getInstance();
+        return db.retrieveUserAccount(userId);
+    }
+
+    private Account findAccountById(UserAccount user, String accountId) {
+        if (user == null || accountId == null) return null;
+        if (user.getAccounts() == null) return null;
+        return user.getAccounts().stream()
+                .filter(acc -> acc.getAccountID().equals(accountId))
+                .findFirst()
+                .orElse(null);
     }
 }

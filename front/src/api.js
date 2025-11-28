@@ -16,7 +16,9 @@ const normalizeTransaction = (tx) => ({
   date: tx.date || tx.transactionDateTime || "",
   type: tx.type || tx.transactionType || "",
   amount: tx.amount ?? 0,
+  // keep both the legacy "account" and explicit source for filtering
   account: tx.account || tx.sourceAccountID || tx.sourceAccountId || "",
+  sourceAccountID: tx.sourceAccountID || tx.sourceAccountId || tx.account || "",
   receiverAccountID: tx.receiverAccountID || tx.receiverAccountId || "",
   status: tx.status || "",
 });
@@ -79,6 +81,12 @@ export async function fetchTransactions(accountId) {
   const res = await fetch(url.toString());
   const data = await handleResponse(res);
   return Array.isArray(data) ? data.map(normalizeTransaction) : [];
+}
+
+export async function fetchUser(userId) {
+  const res = await fetch(`${API_BASE}/users/${userId}`);
+  const data = await handleResponse(res);
+  return data;
 }
 
 export async function createCustomer(payload) {
