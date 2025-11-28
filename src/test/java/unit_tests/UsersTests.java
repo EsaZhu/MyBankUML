@@ -1,62 +1,38 @@
-// package unit_tests;
+package unit_tests;
 
-// import org.junit.jupiter.api.Test;
+import java.time.LocalDateTime;
 
-// import domain.transactions.Transaction;
-// import domain.users.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
-// public class UsersTests {
+import domain.enums.TransactionStatus;
+import domain.transactions.Transaction;
+import domain.users.*;
 
-//     // ---------------- DATABASE ADMINISTRATOR ----------------
+public class UsersTests {
 
-//     @Test
-//     static void test_Admin_CreateAccounts() {
-//         System.out.println("\n--- Admin.manageTellerAccounts + manageCustomerAccounts ---");
+  // ---------------- DATABASE ADMINISTRATOR ----------------
 
-//         DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A1", "admin", "F", "L", "hash");
+  @Test
+  void test_Admin_ReverseTransaction() {
+    System.out.println("\n--- Admin.reverseTransactions() ---");
 
-//         admin.manageTellerAccounts("CREATE", "BT1", "pass", "BR1");
-//         admin.manageCustomerAccounts("CREATE", "U1", "John", "Doe", "pass", "BR1");
+    DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("AD1", "Admin", "Lief", "Erikson", "hashedpassword");
 
-//         var tellers = admin.searchAccounts("teller");
-//         var customers = admin.searchAccounts("customer");
+    Transaction t = new Transaction(
+        "TXN_CRD_T001",
+        "U100",
+        "A100",
+        "U200",
+        "A200",
+        100.0,
+        "TRANSFER",
+        LocalDateTime.now(),
+        TransactionStatus.PENDING);
+    t.execute();
 
-//         if (tellers.size() >= 1 && customers.size() >= 1)
-//             System.out.println("PASS");
-//         else
-//             System.out.println("FAIL");
-//     }
+    admin.reverseTransactions("TXN_CRD_T001");
 
-//     @Test
-//     static void test_Admin_ReverseTransaction() {
-//         System.out.println("\n--- Admin.reverseTransactions() ---");
-
-//         DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A1", "ad", "F", "L", "p");
-
-//         Transaction t = new Transaction(
-//                 "TRX", "A1", "A2", 200, "TRANSFER",
-//                 java.time.LocalDateTime.now(),
-//                 TransactionStatus.COMPLETED);
-
-//         admin.reverseTransactions(t);
-
-//         if (t.getStatus() == TransactionStatus.REVERSED)
-//             System.out.println("PASS");
-//         else
-//             System.out.println("FAIL");
-//     }
-
-//     @Test
-//     static void test_Admin_EmptyAuditReport() {
-//         System.out.println("\n--- Admin.generateReports() empty ---");
-
-//         DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A2", "ad2", "F", "L", "p");
-
-//         Report r = admin.generateReports();
-
-//         if (r.isEmpty())
-//             System.out.println("PASS");
-//         else
-//             System.out.println("FAIL");
-//     }
-// }
+    assertEquals(t.getStatus(), TransactionStatus.REVERSED);
+  }
+}

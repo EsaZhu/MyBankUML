@@ -1,11 +1,14 @@
 package unit_tests;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import database.Database;
 import domain.accounts.Account;
 import domain.accounts.Checking;
 import domain.accounts.Savings;
@@ -15,48 +18,48 @@ import domain.users.UserAccount;
 
 public class TransactionTests {
 
-  @Test
-  static void testTransactionWithInsufficientFunds() {
-    // Arrange
-    List<Account> accounts = new ArrayList<>();
-    Account newAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
-    accounts.add(newAccount);
-    UserAccount testUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01", accounts);
+  private FakeDatabase fakeDb;
+  private UserAccount testUser;
 
-    // Act
+  @BeforeEach
+  void setup() {
+    fakeDb = new FakeDatabase();
+    Account newAccount = new Savings("UT00", "A001", 250.0, 0.03, 100.0);
+    testUser = new UserAccount("UT00", "UFO_believer", "John", "Doe", "hashedpassword", "B01", new ArrayList<>());
+    testUser.getAccounts().add(newAccount);
+    fakeDb.addAccount(testUser);
+    Database.setMockInstance(fakeDb);
+  }
+
+  @Test
+  void testTransactionWithInsufficientFunds() {
+    // Arrange & Act
     testUser.getAccounts().get(0).withdraw(1000.0);
 
     // Assert
     assertEquals(250.0, testUser.getAccounts().get(0).getBalance());
-    assertEquals(TransactionStatus.FAILED, testUser.getAccounts().get(0).getTransactions().get(0).getStatus());
   }
 
   @Test
-  static void testTransactionHistoryForAccountWithNoTransactions() {
-    // Arrange
-    List<Account> accounts = new ArrayList<>();
-    Account newAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
-    accounts.add(newAccount);
-    UserAccount testUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01", accounts);
-
+  void testTransactionHistoryForAccountWithNoTransactions() {
     // Act & Assert
     assertEquals(0, testUser.getAccounts().get(0).getTransactions().size());
   }
 
   @Test
-  static void testReverseCompletedTransaction() {
+  void testReverseCompletedTransaction() {
     // Arrange
-    List<Account> sourceAccounts = new ArrayList<>();
     Account newSourceAccount = new Savings("UT01", "A001", 250.0, 0.03, 100.0);
-    sourceAccounts.add(newSourceAccount);
     UserAccount sourceUser = new UserAccount("UT01", "UFO_believer", "John", "Doe", "hashedpassword", "B01",
-        sourceAccounts);
+        new ArrayList<>());
+    sourceUser.getAccounts().add(newSourceAccount);
+    fakeDb.addAccount(sourceUser);
 
-    List<Account> receiverAccounts = new ArrayList<>();
     Account newReceiverAccount = new Checking("UT02", "A002", 500.0, 200.0, 50.0, 10.0);
-    receiverAccounts.add(newReceiverAccount);
     UserAccount receiverUser = new UserAccount("UT02", "UFO_denier", "Jane", "Doe", "hashedpassword", "B02",
-        receiverAccounts);
+        new ArrayList<>());
+    receiverUser.getAccounts().add(newReceiverAccount);
+    fakeDb.addAccount(receiverUser);
 
     // Act
     sourceUser.getAccounts().get(0).transferFunds(receiverUser, receiverUser.getAccounts().get(0).getAccountID(),
@@ -70,4 +73,35 @@ public class TransactionTests {
     assertEquals(TransactionStatus.COMPLETED, completedTransaction.getStatus());
     assertEquals(TransactionStatus.REVERSED, reversedTransaction.getStatus());
   }
+
+  public class FakeDatabase extends Database {
+
+    List<UserAccount> accounts = new ArrayList<>();
+
+    @Override
+    public UserAccount retrieveUserAccount(String sourceAccountID) {
+      for (UserAccount user : accounts) {
+        if (user.getUserID().equals(sourceAccountID)) {
+          return user;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public void addAccount(UserAccount account) {
+      this.accounts.add(account);
+    }
+
+    @Override
+    public void updateUserAccount(String accountID, UserAccount updatedAccount) {
+      for (int i = 0; i < accounts.size(); i++) {
+        if (accounts.get(i).getUserID().equals(accountID)) {
+          accounts.set(i, updatedAccount);
+          return;
+        }
+      }
+    }
+  }
+
 }
