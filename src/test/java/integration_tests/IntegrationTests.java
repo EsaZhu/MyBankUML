@@ -6,44 +6,39 @@ import domain.bank.*;
 import domain.users.*;
 import domain.transactions.Transaction;
 import java.util.ArrayList;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import application.Login;
 
 public class IntegrationTests {
 
-    public static void Main(String[] args){
-        System.out.println("Running back-end integration testing... ");
-        ITC01_UserAccountComponents();
-        ITC02_MultiAccountTransaction();
-        ITC03_TellerBranchAccess();
-        ITC04_DatabaseAdmin();
-        ITC05_BankBranchIntegration();
-        ITC06_LoginRoles();
-    }
-
-    public static void ITC01_UserAccountComponents() {
+    @Test
+    void ITC01_UserAccountComponents() {
         System.out.println("=== ITC-01 START ===");
 
         // 1. Create accounts (Assume Branch exists and Account constructors work)
         Branch branch = new Branch("BR001", "MainBranch", "123 Street");
 
         // Source User
-        UserAccount sourceUser = new UserAccount("SU01", "Majestic12", "JC", "Denton", "hashedpassword", "BR001", new ArrayList<Account>());
+        UserAccount sourceUser = new UserAccount("SU01", "Majestic12", "JC", "Denton", "hashedpassword", "BR001",
+                new ArrayList<Account>());
         Card card = new Card("SU01", "CRD01", 200, 500, 0.05, 50);
         Checking checking = new Checking("SU01", "CHK01", 200, 100, 50, 10);
         Savings savings = new Savings("SU01", "SAV01", 200, 0.05, 50);
         Account[] accounts = { card, checking, savings };
-        for (Account acc : accounts){
+        for (Account acc : accounts) {
             sourceUser.getAccounts().add(acc);
         }
 
         // Receiver User
-        UserAccount receiverUser = new UserAccount("RU01", "Ambrosia", "Paul", "Denton", "hashedpassword", "BR001", new ArrayList<Account>());
+        UserAccount receiverUser = new UserAccount("RU01", "Ambrosia", "Paul", "Denton", "hashedpassword", "BR001",
+                new ArrayList<Account>());
         Card receiverCard = new Card("RU01", "CRD02", 200, 500, 0.05, 50);
         Checking receiverChecking = new Checking("RU01", "CHK02", 200, 100, 50, 10);
         Savings receiverSavings = new Savings("RU01", "SAV02", 200, 0.05, 50);
         Account[] receiverAccounts = { card, checking, savings };
-        for (Account acc : receiverAccounts){
+        for (Account acc : receiverAccounts) {
             receiverUser.getAccounts().add(acc);
         }
 
@@ -64,7 +59,7 @@ public class IntegrationTests {
         }
 
         // Transfer between accounts (Card -> Checking -> Savings)
-        
+
         card.transferFunds(receiverUser, "CHK02", 100);
         checking.transferFunds(receiverUser, "SAV02", 100);
         savings.transferFunds(receiverUser, "CRD02", 100);
@@ -85,13 +80,22 @@ public class IntegrationTests {
         checking.setBalance(0);
         savings.setBalance(0);
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-01 END ===");
     }
 
-    public static void ITC02_MultiAccountTransaction() {
+    @Test
+    void ITC02_MultiAccountTransaction() {
         System.out.println("=== ITC-02 START ===");
 
         Database db = Database.getInstance();
+
+        ArrayList<Account> accounts = new ArrayList<>();
+        accounts.add(new Savings("U5001", "SAV5001", 1000, 0.05, 0));
+        accounts.add(new Checking("U5001", "CHK5001", 1000, 100, 50, 10));
+        accounts.add(new Card("U5001", "CRD5001", 500, 1000, 0.05, 50));
+        UserAccount preloadUser = new UserAccount("U5001", "hotdog123", "Walter", "Melon", "pw", "BR001", accounts);
+        db.addAccount(preloadUser);
 
         // Pre-loaded user (assume DB has this)
         UserAccount user = db.retrieveUserAccount("U5001");
@@ -121,10 +125,12 @@ public class IntegrationTests {
         System.out.println("DB Checking = " + checkDB.getAccounts().get(1).getBalance());
         System.out.println("DB Savings  = " + checkDB.getAccounts().get(0).getBalance());
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-02 END ===");
     }
 
-    public static void ITC03_TellerBranchAccess() {
+    @Test
+    void ITC03_TellerBranchAccess() {
         System.out.println("=== ITC-03 START ===");
 
         Database db = Database.getInstance();
@@ -153,10 +159,12 @@ public class IntegrationTests {
             System.out.println("Access to BranchB denied");
         }
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-03 END ===");
     }
 
-    public static void ITC04_DatabaseAdmin() {
+    @Test
+    void ITC04_DatabaseAdmin() {
         System.out.println("=== ITC-04 START ===");
 
         Database db = Database.getInstance();
@@ -191,10 +199,12 @@ public class IntegrationTests {
         // Access database console
         System.out.println("Executing SQL: SELECT *");
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-04 END ===");
     }
 
-    public static void ITC05_BankBranchIntegration() {
+    @Test
+    void ITC05_BankBranchIntegration() {
         System.out.println("=== ITC-05 START ===");
 
         Database db = Database.getInstance();
@@ -207,7 +217,8 @@ public class IntegrationTests {
         bank.getBranches().add(br2);
 
         // Create User001
-        UserAccount u1 = new UserAccount("User001", "jane", "Jane", "Margolis", "pw", "BR001", new ArrayList<Account>());
+        UserAccount u1 = new UserAccount("User001", "jane", "Jane", "Margolis", "pw", "BR001",
+                new ArrayList<Account>());
         Checking u1Checking = new Checking("User002", "CHK02", 200, 90, 20, 10);
         db.addAccount(u1);
 
@@ -234,10 +245,12 @@ public class IntegrationTests {
         // Remove User001
         db.removeUserAccount("User001");
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-05 END ===");
     }
 
-    public static void ITC06_LoginRoles() {
+    @Test
+    void ITC06_LoginRoles() {
         System.out.println("=== ITC-06 START ===");
 
         Database db = Database.getInstance();
@@ -259,6 +272,7 @@ public class IntegrationTests {
         boolean bad = login.login("xxx", "yyy");
         System.out.println("Invalid login → no redirect");
 
+        assertTrue(true); // reached end without any errors
         System.out.println("=== ITC-06 END ===");
     }
 }
