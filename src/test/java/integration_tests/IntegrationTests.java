@@ -219,7 +219,8 @@ public class IntegrationTests {
         // Create User001
         UserAccount u1 = new UserAccount("User001", "jane", "Jane", "Margolis", "pw", "BR001",
                 new ArrayList<Account>());
-        Checking u1Checking = new Checking("User002", "CHK02", 200, 90, 20, 10);
+        Checking u1Checking = new Checking("User001", "CHK02", 200, 90, 20, 10);
+        u1.getAccounts().add(u1Checking);
         db.addAccount(u1);
 
         // Deposit
