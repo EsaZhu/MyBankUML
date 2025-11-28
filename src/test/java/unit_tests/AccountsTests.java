@@ -11,7 +11,7 @@ public class AccountsTests {
   // ---------------- CHECKING ----------------
 
   @Test
-  static void testChecking_applyMonthlyFee() {
+  void testChecking_applyMonthlyFee() {
     // Arrange
     Checking testChecking = new Checking("UT01", "CHK01", 200, 100, 50, 10);
 
@@ -25,7 +25,7 @@ public class AccountsTests {
   // ---------------- SAVINGS ----------------
 
   @Test
-  static void testSavings_calculateInterest() {
+  void testSavings_calculateInterest() {
     // Arrange
     Savings testSavings = new Savings("UT02", "SAV01", 1000, 0.05, 0);
 
@@ -39,7 +39,7 @@ public class AccountsTests {
   // ---------------- CARD ----------------
 
   @Test
-  static void testCard_applyMonthlyFee() {
+  void testCard_applyMonthlyFee() {
     // Arrange
     Card testCard = new Card("UT03", "CARD01", 100, 500, 0.05, 50);
 
