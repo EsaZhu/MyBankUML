@@ -180,14 +180,14 @@ public class Transaction {
         switch (transactionType) {
             case "DEPOSIT":
                 sourceAccount.setBalance(sourceAccount.getBalance() - this.amount);
-                this.status = TransactionStatus.COMPLETED;
+                this.status = TransactionStatus.REVERSED;
                 sourceAccount.getTransactions().add(this);
                 db.updateUserAccount(sourceUser.getUserID(), sourceUser);
                 // db.updateAccount(this.sourceAccountID, sourceUser);
                 return true;
             case "WITHDRAW":
                 sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
-                this.status = TransactionStatus.COMPLETED;
+                this.status = TransactionStatus.REVERSED;
                 sourceAccount.getTransactions().add(this);
                 db.updateUserAccount(sourceUser.getUserID(), sourceUser);
                 // db.updateAccount(this.sourceAccountID, sourceUser);
@@ -201,7 +201,7 @@ public class Transaction {
                 }
                 sourceAccount.setBalance(sourceAccount.getBalance() + this.amount);
                 receiverAccount.setBalance(receiverAccount.getBalance() - this.amount);
-                this.status = TransactionStatus.COMPLETED;
+                this.status = TransactionStatus.REVERSED;
                 sourceAccount.getTransactions().add(this);
                 receiverAccount.getTransactions().add(this);
                 db.updateUserAccount(sourceUser.getUserID(), sourceUser);

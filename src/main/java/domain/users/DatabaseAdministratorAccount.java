@@ -294,7 +294,6 @@ public class DatabaseAdministratorAccount implements IUser {
 
     public void reverseTransactions(String id) {
         database.retrieveTransaction(id).reverseTransaction();
-
     }
 
 
