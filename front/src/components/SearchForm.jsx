@@ -24,7 +24,7 @@ export default function SearchForm({ onSearch, loading }) {
           <input
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            placeholder="e.g. CHK-1001"
+            placeholder="e.g. U176...."
           />
         </div>
         <div className="field">
@@ -36,11 +36,11 @@ export default function SearchForm({ onSearch, loading }) {
           />
         </div>
         <div className="field">
-          <span>Branch</span>
+          <span>Branch ID</span>
           <input
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
-            placeholder="e.g. Downtown"
+            placeholder="e.g. BR1764....."
           />
         </div>
         <div className="field">

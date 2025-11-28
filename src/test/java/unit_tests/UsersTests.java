@@ -1,62 +1,86 @@
 package unit_tests;
 
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import database.Database;
+import domain.accounts.Savings;
+import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
 import domain.users.*;
 
 public class UsersTests {
 
-    // ---------------- DATABASE ADMINISTRATOR ----------------
+  private FakeDatabase db;
 
-    @Test
-    static void test_Admin_CreateAccounts() {
-        System.out.println("\n--- Admin.manageTellerAccounts + manageCustomerAccounts ---");
+  @BeforeEach
+  void setUp() throws Exception{
+    db = new FakeDatabase();
+    Field instance = Database.class.getDeclaredField("instance");
+    instance.setAccessible(true);
+    instance.set(null, db); // replace singleton
+  }
 
-        DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A1", "admin", "F", "L", "hash");
+  // ---------------- DATABASE ADMINISTRATOR ----------------
 
-        admin.manageTellerAccounts("CREATE", "BT1", "pass", "BR1");
-        admin.manageCustomerAccounts("CREATE", "U1", "John", "Doe", "pass", "BR1");
+  @Test
+  void test_Admin_ReverseTransaction() throws NoSuchFieldException, IllegalAccessException {
+    System.out.println("\n--- Admin.reverseTransactions() ---");
 
-        var tellers = admin.searchAccounts("teller");
-        var customers = admin.searchAccounts("customer");
+    DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("AD1", "Admin", "Lief", "Erikson",
+        "hashedpassword");
 
-        if (tellers.size() >= 1 && customers.size() >= 1)
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
+    Field field = DatabaseAdministratorAccount.class.getDeclaredField("database");
+    field.setAccessible(true);
+    field.set(admin, db);
+
+    Transaction t = new Transaction(
+        "TXN_CRD_T001",
+        "U100",
+        "A100",
+        null,
+        null,
+        100.0,
+        "DEPOSIT",
+        LocalDateTime.now(),
+        TransactionStatus.PENDING);
+
+    db.savedTransaction = t;
+    db.savedUserAccount = new UserAccount("U100", "hotdog123", "Ash", "Ketchup", "hashedpassword", "BR01", new ArrayList<Account>());
+    db.savedUserAccount.getAccounts().add(new Savings("U100", "A100", 100, 0.06, 10));
+    
+    t.execute();
+
+    admin.reverseTransactions("TXN_CRD_T001");
+
+    assertEquals(t.getStatus(), TransactionStatus.REVERSED);
+  }
+
+  // --------------------- Fake Database Mock ---------------------
+  static class FakeDatabase extends Database {
+    public Transaction savedTransaction;
+    public UserAccount savedUserAccount;
+
+    @Override
+    public Transaction retrieveTransaction(String id) {
+      return savedTransaction;
     }
 
-    @Test
-    static void test_Admin_ReverseTransaction() {
-        System.out.println("\n--- Admin.reverseTransactions() ---");
-
-        DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A1", "ad", "F", "L", "p");
-
-        Transaction t = new Transaction(
-                "TRX", "A1", "A2", 200, "TRANSFER",
-                java.time.LocalDateTime.now(),
-                TransactionStatus.COMPLETED);
-
-        admin.reverseTransactions(t);
-
-        if (t.getStatus() == TransactionStatus.REVERSED)
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
+    @Override
+    public UserAccount retrieveUserAccount(String id) {
+      return savedUserAccount;
     }
 
-    @Test
-    static void test_Admin_EmptyAuditReport() {
-        System.out.println("\n--- Admin.generateReports() empty ---");
-
-        DatabaseAdministratorAccount admin = new DatabaseAdministratorAccount("A2", "ad2", "F", "L", "p");
-
-        Report r = admin.generateReports();
-
-        if (r.isEmpty())
-            System.out.println("PASS");
-        else
-            System.out.println("FAIL");
+    @Override
+    public void updateUserAccount(String id, UserAccount user) {
+      savedUserAccount = user;
     }
+  }
+
 }

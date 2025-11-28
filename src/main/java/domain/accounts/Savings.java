@@ -47,24 +47,23 @@ public class Savings extends Account {
      * @return
      */
     public double calculateInterest() {
+        double interestAmount = super.getBalance() * interestRate;
         Transaction interestTransaction = new Transaction(
                 "TXN_" + super.accountHeader + "_I" + System.currentTimeMillis(),
                 super.getUserID(),
                 super.getAccountID(),
                 null,
                 null,
-                super.getBalance() * interestRate,
+                interestAmount,
                 "DEPOSIT",
                 java.time.LocalDateTime.now(),
                 TransactionStatus.PENDING);
         interestTransaction.execute();
-        return super.getBalance() * interestRate;
+        return interestAmount;
     }
 
-    /**
-     * GUI display method to show receipt of interest calculation
-     */
-    public void receipt() {
-        // TO BE REPLACED BY GUI
+    /*-------------------- Getters and Setters --------------------*/
+    public double receipt() {
+        return super.getBalance() * interestRate;
     }
 }

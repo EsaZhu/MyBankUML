@@ -52,11 +52,14 @@ public class Card extends Account {
         this.withdraw(minimumPayment); // deduct new minimum payment from balance
     }
 
-    /**
-     * GUI display method to check if the card limit is exceeded and displays
-     * available credit
-     */
-    public void checkCardLimit() {
-        // TO BE REPLACED BY GUI
+
+    /*-------------------- Getters and Setters --------------------*/
+
+    public double checkCardLimit() {
+        return this.cardLimit;
+    }
+
+    public double getMinimumPayment(){
+        return this.minimumPayment = (this.cardLimit - super.getBalance()) * interest;
     }
 }

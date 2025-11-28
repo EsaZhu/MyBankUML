@@ -121,10 +121,9 @@ export default function AdminDashboard({ user, accounts, transactions }) {
 
       {tab === "manage" && (
         <>
-          <h3>Manage Users & Branches (Prototype)</h3>
+          <h3>Manage Users & Branches </h3>
           <p className="muted">
-            These forms show how the admin would manage tellers and branches. You can
-            connect them to your Java backend later.
+            As an admin you cann add or remove bank tellers, and create new branches.
           </p>
 
           <div className="grid-2">
