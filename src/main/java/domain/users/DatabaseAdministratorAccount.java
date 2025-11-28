@@ -136,7 +136,7 @@ public class DatabaseAdministratorAccount implements IUser {
     }
 
     private void createTeller(String bankTellerID, String username, String firstname, String lastname, String passwordHash, String branch) {
-        if (database.retrieveTeller(bankTellerID) == null) {
+        if (database.retrieveTeller(bankTellerID) != null) {
             System.out.println("Bank Teller with this ID already exists");
         } else {
             BankTellerAccount bankTellerAccount = new BankTellerAccount(bankTellerID, username, firstname, lastname, passwordHash, branch, database);
