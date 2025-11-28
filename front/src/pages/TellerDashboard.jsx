@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchAccounts } from "../api";
+import { searchAccounts, fetchBranches, createCustomer, manageAccount } from "../api";
 import SearchForm from "../components/SearchForm.jsx";
-import { createCustomer, manageAccount } from "../api";
 
 export default function TellerDashboard({ user, accounts, transactions }) {
   const navigate = useNavigate();
@@ -31,7 +30,8 @@ export default function TellerDashboard({ user, accounts, transactions }) {
   };
 
   const openCustomerProfile = (account) => {
-    navigate(`/teller/customers/${account.id}`, { state: { account } });
+    const customerId = account.customerId || (account.id ? account.id.split("-")[0] : account.id);
+    navigate(`/teller/customer/${customerId}`);
   };
 
   return (
@@ -148,7 +148,6 @@ function TabButtons({ tabs, current, onChange }) {
 
 function CreateCustomerForm() {
   const [form, setForm] = useState({
-    userID: "",
     firstName: "",
     lastName: "",
     username: "",
@@ -159,6 +158,7 @@ function CreateCustomerForm() {
     accountType: "Checking",
     initialDeposit: "",
   });
+  const [branches, setBranches] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -167,6 +167,10 @@ function CreateCustomerForm() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    fetchBranches().then(setBranches).catch(() => {});
+  }, []);
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -174,7 +178,6 @@ function CreateCustomerForm() {
     setLoading(true);
     try {
       await createCustomer({
-        userID: form.userID,
         username: form.username,
         password: form.password,
         firstName: form.firstName,
@@ -191,7 +194,6 @@ function CreateCustomerForm() {
         lastName: "",
         username: "",
         password: "",
-        userID: "",
         email: "",
         phone: "",
         branch: "",
@@ -207,15 +209,6 @@ function CreateCustomerForm() {
 
   return (
     <form className="grid-2" onSubmit={onSubmit}>
-      <div className="field">
-        <span>User ID</span>
-        <input
-          value={form.userID}
-          onChange={(e) => onChange("userID", e.target.value)}
-          placeholder="e.g. U004"
-          required
-        />
-      </div>
       <div className="field">
         <span>First name</span>
         <input
@@ -254,11 +247,14 @@ function CreateCustomerForm() {
      
       <div className="field">
         <span>Branch</span>
-        <input
-          value={form.branch}
-          onChange={(e) => onChange("branch", e.target.value)}
-          placeholder="Downtown"
-        />
+        <select value={form.branch} onChange={(e) => onChange("branch", e.target.value)} required>
+          <option value="">Select branch</option>
+          {branches.map((b) => (
+            <option key={b.branchID} value={b.branchID}>
+              {b.branchID} - {b.branchName}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="field">
         <span>Account type</span>
@@ -295,7 +291,7 @@ function CreateCustomerForm() {
 
 function AccountMaintenance() {
   const [action, setAction] = useState("open");
-  const [userId, setUserId] = useState("");
+  const [username, setUsername] = useState("");
   const [accountType, setAccountType] = useState("Checking");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -309,15 +305,15 @@ function AccountMaintenance() {
       setLoading(true);
       await manageAccount({
         action,
-        userID: userId,
+        username,
         accountType,
       });
       setMessage(
         `${action === "open" ? "Open" : "Close"} account request for client ${
-          userId || "N/A"
+          username || "N/A"
         } (${accountType}) submitted.`
       );
-      setUserId("");
+      setUsername("");
     } catch (err) {
       setError(err.message || "Failed to process request");
     } finally {
@@ -335,11 +331,11 @@ function AccountMaintenance() {
         </select>
       </div>
       <div className="field">
-        <span>Client User ID</span>
+        <span>Client Username</span>
         <input
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          placeholder="e.g. U001"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="e.g. User1"
           required
         />
       </div>

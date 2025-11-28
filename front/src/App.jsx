@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
 
 import Header from "./components/Header.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -144,6 +144,16 @@ export default function App() {
             }
           />
 
+          {/* Teller view of a customer dashboard (impersonated) */}
+          <Route
+            path="/teller/customer/:customerId"
+            element={
+              <ProtectedRoute user={user} allowedRoles={[ROLES.TELLER]}>
+                <ImpersonatedCustomer />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Admin */}
           <Route
             path="/admin"
@@ -158,6 +168,70 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+    </div>
+  );
+}
+
+// Renders the customer dashboard for a given customerId when a teller navigates to it.
+function ImpersonatedCustomer() {
+  const { customerId } = useParams();
+  const navigate = useNavigate();
+  const [custUser, setCustUser] = useState(null);
+  const [custAccounts, setCustAccounts] = useState([]);
+  const [custTransactions, setCustTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadCustomerData = useCallback(async () => {
+    if (!customerId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const [userDoc, acctList, txList] = await Promise.all([
+        fetchUser(customerId),
+        fetchAccounts({ accountId: customerId }),
+        fetchTransactions(undefined),
+      ]);
+      setCustUser({
+        id: userDoc?.userID,
+        name: userDoc?.username,
+        firstName: userDoc?.firstName,
+        lastName: userDoc?.lastName,
+        role: ROLES.CUSTOMER,
+      });
+
+      const historyIds = new Set(userDoc?.transactionHistory || []);
+      const filteredTx = (txList || []).filter((tx) => historyIds.has(tx.id));
+
+      setCustAccounts(acctList || []);
+      setCustTransactions(filteredTx);
+    } catch (err) {
+      setError(err.message || "Failed to load customer data");
+    } finally {
+      setLoading(false);
+    }
+  }, [customerId]);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [loadCustomerData]);
+
+  if (error) return <p className="error-msg">{error}</p>;
+  if (loading || !custUser) return <p className="muted">Loading customer...</p>;
+
+  return (
+    <div>
+      <div style={{ marginBottom: "12px" }}>
+        <button className="nav-btn" onClick={() => navigate("/teller")}>
+          Back to Teller Dashboard
+        </button>
+      </div>
+      <CustomerDashboard
+        user={custUser}
+        accounts={custAccounts}
+        transactions={custTransactions}
+        onRefresh={loadCustomerData}
+      />
     </div>
   );
 }

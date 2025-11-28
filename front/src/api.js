@@ -138,3 +138,27 @@ export async function recordTransaction(payload) {
   });
   return handleResponse(res);
 }
+
+export async function fetchBranches() {
+  const res = await fetch(`${API_BASE}/branches`);
+  return handleResponse(res);
+}
+
+export async function fetchBanks() {
+  const res = await fetch(`${API_BASE}/banks`);
+  return handleResponse(res);
+}
+
+export async function createBranch(payload) {
+  const res = await fetch(`${API_BASE}/branches`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function fetchTellers() {
+  const res = await fetch(`${API_BASE}/tellers`);
+  return handleResponse(res);
+}

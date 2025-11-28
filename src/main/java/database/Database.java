@@ -105,6 +105,10 @@ public class Database {
     public MongoCollection<Document> getBranchCollection() {
         return branchCollection;
     }
+
+    public MongoCollection<Document> getBankCollection() {
+        return bankCollection;
+    }
     
     // ----User Account Operations----
     public void addAccount(UserAccount account) {

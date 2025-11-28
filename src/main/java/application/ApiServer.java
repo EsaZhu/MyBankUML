@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import database.Database;
+import com.mongodb.client.model.Filters;
 import domain.accounts.Card;
 import domain.accounts.Checking;
 import domain.accounts.Savings;
@@ -56,6 +57,8 @@ public class ApiServer {
         server.createContext("/api/transactions/transfer", new TransferHandler(db));
         server.createContext("/api/accounts/manage", new AccountMaintenanceHandler(db));
         server.createContext("/api/users", new UsersHandler(db));
+        server.createContext("/api/branches", new BranchesHandler(db));
+        server.createContext("/api/banks", new BanksHandler(db));
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         System.out.println("API server listening on http://localhost:" + port);
@@ -65,7 +68,7 @@ public class ApiServer {
 
     private static void addCors(Headers headers) {
         headers.add("Access-Control-Allow-Origin", "*");
-        headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        headers.add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
         headers.add("Access-Control-Allow-Headers", "Content-Type");
         headers.add("Access-Control-Max-Age", "86400");
     }
@@ -398,8 +401,12 @@ public class ApiServer {
                 Number initNum = payload.get("initialDeposit", Number.class);
                 double initialDeposit = initNum != null ? initNum.doubleValue() : 0.0;
 
-                if (userId == null || username == null || password == null) {
-                    sendJson(exchange, 400, "{\"error\":\"userID, username, and password are required\"}");
+                // Auto-generate userID if not provided
+                if (userId == null || userId.isBlank()) {
+                    userId = "U" + System.currentTimeMillis();
+                }
+                if (username == null || password == null) {
+                    sendJson(exchange, 400, "{\"error\":\"username and password are required\"}");
                     return;
                 }
 
@@ -493,8 +500,12 @@ public class ApiServer {
                 String firstName = payload.getString("firstName");
                 String lastName = payload.getString("lastName");
 
-                if (tellerId == null || username == null || password == null) {
-                    sendJson(exchange, 400, "{\"error\":\"bankTellerID, username, and password are required\"}");
+                // auto-generate ID if missing
+                if (tellerId == null || tellerId.isBlank()) {
+                    tellerId = "BT" + System.currentTimeMillis();
+                }
+                if (username == null || password == null) {
+                    sendJson(exchange, 400, "{\"error\":\"username and password are required\"}");
                     return;
                 }
 
@@ -505,6 +516,17 @@ public class ApiServer {
 
                 BankTellerAccount teller = new BankTellerAccount(tellerId, username, firstName, lastName, password, branch, db);
                 db.addTeller(teller);
+                // Attach teller to its branch record for quick lookup
+                if (branch != null && !branch.isBlank()) {
+                    Document tellerDoc = new Document()
+                            .append("bankTellerID", tellerId)
+                            .append("username", username)
+                            .append("firstName", firstName)
+                            .append("lastName", lastName)
+                            .append("branchID", branch);
+                    db.getBranchCollection().updateOne(Filters.eq("branchID", branch),
+                            new Document("$addToSet", new Document("tellers", tellerDoc)));
+                }
                 sendJson(exchange, 201, "{\"status\":\"created\"}");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -529,6 +551,13 @@ public class ApiServer {
                 }
 
                 db.removeTeller(tellerId);
+                // also remove from any branch.tellers array (objects or ids)
+                db.getBranchCollection().updateMany(
+                        new Document("tellers.bankTellerID", tellerId),
+                        new Document("$pull", new Document("tellers", new Document("bankTellerID", tellerId))));
+                db.getBranchCollection().updateMany(
+                        new Document("tellers", tellerId),
+                        new Document("$pull", new Document("tellers", tellerId)));
                 sendJson(exchange, 200, "{\"status\":\"deleted\"}");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -645,34 +674,94 @@ public class ApiServer {
                 Document payload = Document.parse(body);
                 String action = payload.getString("action");
                 String userId = payload.getString("userID");
+                String username = payload.getString("username");
                 String accountType = payload.getString("accountType");
 
-                if (action == null || userId == null) {
-                    sendJson(exchange, 400, "{\"error\":\"action and userID are required\"}");
+                if (action == null || (userId == null && (username == null || username.isBlank()))) {
+                    sendJson(exchange, 400, "{\"error\":\"action and userID or username are required\"}");
                     return;
                 }
 
-                UserAccount existing = db.retrieveUserAccount(userId);
+                UserAccount existing = null;
+                if (userId != null && !userId.isBlank()) {
+                    existing = db.retrieveUserAccount(userId);
+                }
+                if (existing == null && username != null && !username.isBlank()) {
+                    IUser maybe = db.retrieveUserByUsername(username);
+                    if (maybe instanceof UserAccount) {
+                        existing = (UserAccount) maybe;
+                        userId = existing.getUserID();
+                    }
+                }
                 if (existing == null) {
                     sendJson(exchange, 404, "{\"error\":\"Customer not found\"}");
                     return;
                 }
 
+                // open a new sub-account
+                if ("open".equalsIgnoreCase(action)) {
+                    if (accountType == null || accountType.isBlank()) {
+                        sendJson(exchange, 400, "{\"error\":\"accountType is required for open\"}");
+                        return;
+                    }
+                    List<Account> accounts = existing.getAccounts();
+                    if (accounts == null) accounts = new ArrayList<>();
+                    String accountId = userId + "-" + accountType;
+                    boolean exists = accounts.stream().anyMatch(a -> accountId.equals(a.getAccountID()));
+                    if (exists) {
+                        sendJson(exchange, 409, "{\"error\":\"Account already exists\"}");
+                        return;
+                    }
+                    Account newAcc;
+                    switch (accountType.toLowerCase()) {
+                        case "savings":
+                            newAcc = new Savings(userId, accountId, 0, 0, 0);
+                            break;
+                        case "card":
+                            newAcc = new Card(userId, accountId, 0, 0, 0, 0);
+                            break;
+                        default:
+                            newAcc = new Checking(userId, accountId, 0, 0, 0, 0);
+                    }
+                    accounts.add(newAcc);
+                    UserAccount updated = new UserAccount(existing.getUserID(), existing.getUsername(),
+                            existing.getFirstName(), existing.getLastName(), existing.getPasswordHash(),
+                            existing.getBranchID(), accounts);
+                    updated.setTransactionHistory(existing.getTransactionHistory());
+                    db.updateUserAccount(userId, updated);
+                    sendJson(exchange, 200, "{\"status\":\"account opened\"}");
+                    return;
+                }
+
+                // close a sub-account
                 if ("close".equalsIgnoreCase(action)) {
-                    db.removeUserAccount(userId);
+                    if (accountType == null || accountType.isBlank()) {
+                        sendJson(exchange, 400, "{\"error\":\"accountType is required for close\"}");
+                        return;
+                    }
+                    List<Account> accounts = existing.getAccounts();
+                    if (accounts == null || accounts.isEmpty()) {
+                        sendJson(exchange, 404, "{\"error\":\"No accounts to close\"}");
+                        return;
+                    }
+                    String accountId = userId + "-" + accountType;
+                    List<Account> remaining = accounts.stream()
+                            .filter(a -> !accountId.equals(a.getAccountID()))
+                            .collect(Collectors.toList());
+                    if (remaining.size() == accounts.size()) {
+                        sendJson(exchange, 404, "{\"error\":\"Account not found\"}");
+                        return;
+                    }
+                    UserAccount updated = new UserAccount(existing.getUserID(), existing.getUsername(),
+                            existing.getFirstName(), existing.getLastName(), existing.getPasswordHash(),
+                            existing.getBranchID(), remaining);
+                    updated.setTransactionHistory(existing.getTransactionHistory());
+                    db.updateUserAccount(userId, updated);
                     sendJson(exchange, 200, "{\"status\":\"account closed\"}");
                     return;
                 }
 
-                // open/update
-                Document updates = new Document();
-                if (accountType != null) {
-                    updates.append("accountType", accountType);
-                }
-                if (!updates.isEmpty()) {
-                    db.updateAccount(userId, updates);
-                }
-                sendJson(exchange, 200, "{\"status\":\"account updated\"}");
+                sendJson(exchange, 400, "{\"error\":\"Unsupported action\"}");
             } catch (Exception e) {
                 e.printStackTrace();
                 sendJson(exchange, 500, "{\"error\":\"Failed to manage account\"}");
@@ -721,6 +810,88 @@ public class ApiServer {
             } catch (Exception e) {
                 e.printStackTrace();
                 sendJson(exchange, 500, "{\"error\":\"Failed to fetch user\"}");
+            }
+        }
+    }
+
+    private static class BranchesHandler implements HttpHandler {
+        private final Database db;
+
+        BranchesHandler(Database db) {
+            this.db = db;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                handleOptions(exchange);
+                return;
+            }
+            String method = exchange.getRequestMethod();
+            try {
+                if ("GET".equalsIgnoreCase(method)) {
+                    List<Document> branches = new ArrayList<>();
+                    db.getBranchCollection().find().into(branches);
+                    String json = branches.stream().map(Document::toJson).collect(Collectors.joining(",", "[", "]"));
+                    sendJson(exchange, 200, json);
+                    return;
+                }
+                if ("POST".equalsIgnoreCase(method)) {
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    Document payload = Document.parse(body);
+                    String branchName = payload.getString("branchName");
+                    String address = payload.getString("address");
+                    String bankID = payload.getString("bankID");
+                    if (branchName == null || address == null || bankID == null) {
+                        sendJson(exchange, 400, "{\"error\":\"branchName, address, and bankID are required\"}");
+                        return;
+                    }
+                    String branchID = "BR" + System.currentTimeMillis();
+                    Document branch = new Document()
+                            .append("branchID", branchID)
+                            .append("branchName", branchName)
+                            .append("address", address)
+                            .append("accounts", new ArrayList<String>());
+                    db.getBranchCollection().insertOne(branch);
+                    // add to bank branches array
+                    db.getBankCollection().updateOne(Filters.eq("bankID", bankID),
+                            new Document("$addToSet", new Document("branches", branchID)));
+                    sendJson(exchange, 201, branch.toJson());
+                    return;
+                }
+                sendJson(exchange, 405, "{\"error\":\"Method not allowed\"}");
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendJson(exchange, 500, "{\"error\":\"Failed to handle branch request\"}");
+            }
+        }
+    }
+
+    private static class BanksHandler implements HttpHandler {
+        private final Database db;
+
+        BanksHandler(Database db) {
+            this.db = db;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                handleOptions(exchange);
+                return;
+            }
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendJson(exchange, 405, "{\"error\":\"Method not allowed\"}");
+                return;
+            }
+            try {
+                List<Document> banks = new ArrayList<>();
+                db.getBankCollection().find().into(banks);
+                String json = banks.stream().map(Document::toJson).collect(Collectors.joining(",", "[", "]"));
+                sendJson(exchange, 200, json);
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendJson(exchange, 500, "{\"error\":\"Failed to fetch banks\"}");
             }
         }
     }
