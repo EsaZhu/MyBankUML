@@ -87,6 +87,7 @@ git push origin feature/<module-name>
 # open a Merge Request into develop
 ```
 ## hwo to run main in backend/ main/application/Main.java
+- Make sure lastest MAVEN and Java JDK 21 version are installed.
 - Make the script executable: 
 - Run it from project root 
 ```bash
