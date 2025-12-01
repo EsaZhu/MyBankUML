@@ -3,13 +3,13 @@ package unit_tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import database.Database;
 import domain.bank.Bank;
 import domain.bank.Branch;
+import database.Database;
 
 public class BankTest {
 
@@ -27,8 +27,9 @@ public class BankTest {
     void testGetBranches() {
         Branch b1 = new Branch("BR1", "Main", "Test Bank");
         Branch b2 = new Branch("BR2", "West", "Test Bank");
-        bank.getBranches().add(b1);
-        bank.getBranches().add(b2);
+
+        fakeDb.branches.add(b1);
+        fakeDb.branches.add(b2);
 
         ArrayList<Branch> list = bank.getBranches();
 
@@ -37,18 +38,20 @@ public class BankTest {
         assertTrue(list.contains(b2));
     }
 
-    // --------------------- Fake Database Mock ---------------------
-    class FakeDatabase extends Database {
-        public ArrayList<Branch> addedBranches = new ArrayList<>();
-        public ArrayList<String> updatedBanks = new ArrayList<>();
+    // Test getBranches when empty
+    @Test
+    void testGetBranchesEmpty() {
+        ArrayList<Branch> list = bank.getBranches();
+        
+        assertTrue(list.isEmpty());
+    }
 
-        public HashMap<String, Branch> savedBranches = new HashMap<>();
+    // Database stub
+    class FakeDatabase {
+        public ArrayList<Branch> branches = new ArrayList<>();
 
-        @Override
         public ArrayList<Branch> getAllBranches() {
-            return this.addedBranches;
+            return branches;
         }
-
     }
 }
-
