@@ -24,6 +24,12 @@ class DatabaseTest {
     }
 
     @Test
+    void test_DB_Connect() {
+        boolean connected = db.connect();
+        assertEquals(true, connected);
+    }
+
+    @Test
     void testAddAndRetrieveAccount() {
         UserAccount u1 = new UserAccount("U1", "John", null, null, null, null, null);
         db.addAccount(u1);
@@ -64,7 +70,7 @@ class DatabaseTest {
 
     @Test
     void testAddAndRetrieveBank() {
-        Bank bank = new Bank("Test Bank", "Bank1", new ArrayList<>(), new Object());
+        Bank bank = new Bank("Test Bank", "Bank1", null);
         db.addBank(bank);
 
         Bank retrieved = db.retrieveBank("Bank1");
@@ -73,10 +79,10 @@ class DatabaseTest {
 
     @Test
     void testAddAndRetrieveTeller() {
-        BankTellerAccount teller = new BankTellerAccount("T1", "cashier", null, null, null, null);
+        BankTellerAccount teller = new BankTellerAccount("T01", "cashier", "JC", "Denton", "hashedpassword", "BR01", null);
         db.addTeller(teller);
 
-        BankTellerAccount retrieved = db.retrieveTeller("T1");
+        BankTellerAccount retrieved = db.retrieveTeller("T01");
         assertEquals(teller, retrieved);
     }
 
@@ -91,8 +97,8 @@ class DatabaseTest {
 
     @Test
     void testSearchByAttribute() {
-        UserAccount u1 = new UserAccount("U1", "John", null, null, null, null, null);
-        UserAccount u2 = new UserAccount("U2", "John", null, null, null, null, null);
+        UserAccount u1 = new UserAccount("U1", "J'onn", "John", null, null, null, null);
+        UserAccount u2 = new UserAccount("U2", "J'onn", "John", null, null, null, null);
         db.addAccount(u1);
         db.addAccount(u2);
 
@@ -102,13 +108,17 @@ class DatabaseTest {
         assertTrue(results.contains(u2));
     }
 
-    // Database mock up
+    // --------------------- Fake Database Mock ---------------------
     static class FakeDatabase {
         HashMap<String, UserAccount> accounts = new HashMap<>();
         HashMap<String, BankTellerAccount> tellers = new HashMap<>();
         HashMap<String, DatabaseAdministratorAccount> admins = new HashMap<>();
         HashMap<String, Branch> branches = new HashMap<>();
         HashMap<String, Bank> banks = new HashMap<>();
+
+        public boolean connect() {
+            return true;
+        }
 
         public void addAccount(UserAccount account) {
             accounts.put(account.getUserID(), account);
@@ -143,7 +153,7 @@ class DatabaseTest {
         }
 
         public void addTeller(BankTellerAccount teller) {
-            tellers.put(teller.getUsername(), teller);
+            tellers.put(teller.getBankTellerID(), teller);
         }
 
         public BankTellerAccount retrieveTeller(String tellerID) {
@@ -162,6 +172,8 @@ class DatabaseTest {
             ArrayList<UserAccount> result = new ArrayList<>();
             for (UserAccount u : accounts.values()) {
                 if ("username".equals(fieldName) && value.equals(u.getUsername())) {
+                    result.add(u);
+                } else if ("firstName".equals(fieldName) && value.equals(u.getFirstName())) {
                     result.add(u);
                 }
             }
