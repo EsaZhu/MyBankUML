@@ -12,6 +12,7 @@ import database.Database;
 import domain.accounts.Card;
 import domain.accounts.Checking;
 import domain.accounts.Savings;
+import domain.users.Account;
 import domain.users.UserAccount;
 
 public class AccountsTests {
@@ -73,6 +74,55 @@ public class AccountsTests {
 
     // Assert
     assertEquals(expected, testCard.getBalance());
+  }
+
+  // ---------------- DEPOSIT ----------------
+  @Test
+  void testAccountDeposit() {
+    // Arrange
+    Account acc = new Savings("UT01", "ACC01", 0, 0.03, 0);
+    testUser.getAccounts().add(acc);
+
+    // Act
+    acc.deposit(100);
+
+    // Assert
+    assertEquals(100, acc.getBalance());
+  }
+
+  // ---------------- WITHDRAW ----------------
+  @Test
+  void testAccount_Withdraw() {
+    // Arrange
+    Account acc = new Savings("UT01", "ACC02", 100, 0.03, 0);
+    testUser.getAccounts().add(acc);
+
+    // Act
+    acc.withdraw(100);
+
+    // Assert
+    assertEquals(0, acc.getBalance());
+  }
+
+  // ---------------- TRANSFER FUNDS ----------------
+  @Test
+  void testTransferFunds() {
+    // Arrange
+    Account sourceAccount = new Savings("UT01", "ACC03", 100, 0.03, 0);
+    Account receiverAccount = new Checking("UT02", "ACC04", 0, 100, 50, 10);
+
+    UserAccount user2 = new UserAccount("UT02", "AnotherUser", "Funny", "Valentine",
+        "pass", "B02", new ArrayList<>());
+
+    testUser.getAccounts().add(sourceAccount);
+    user2.getAccounts().add(receiverAccount);
+
+    // Act
+    sourceAccount.transferFunds(user2, receiverAccount.getAccountID(), 100);
+
+    // Assert
+    assertEquals(0, sourceAccount.getBalance());
+    assertEquals(100, receiverAccount.getBalance());
   }
 
   // --------------------- Fake Database Mock ---------------------

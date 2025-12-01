@@ -15,7 +15,7 @@ import domain.enums.TransactionStatus;
 import domain.transactions.Transaction;
 import domain.users.*;
 
-public class UsersTests {
+public class DatabaseAdminTests {
 
   private FakeDatabase db;
 
