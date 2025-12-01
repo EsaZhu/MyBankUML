@@ -12,6 +12,8 @@ public class Branch {
         this.address = address;
     }
 
+    public Branch() {}
+
     public String getBranchID() {
         return branchID;
     }

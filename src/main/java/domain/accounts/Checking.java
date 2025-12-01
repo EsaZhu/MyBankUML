@@ -52,11 +52,9 @@ public class Checking extends Account {
         this.withdraw(monthlyFee);
     }
 
-    /**
-     * GUI display method to check minimum balance
-     */
-    public void checkMinBalance() {
-        // TO BE REPLACED BY GUI
+    /*-------------------- Getters and Setters --------------------*/
+    public double checkMinBalance() {
+        return this.minBalance;
     }
 
 }
